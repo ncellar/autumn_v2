@@ -2,7 +2,9 @@ package norswap.autumn
 import norswap.autumn.parsers.*
 import norswap.autumn.Grammar.TokenDisambiguation.*
 import norswap.violin.Stack
+import norswap.violin.maybe.*
 import norswap.violin.stream.*
+import norswap.violin.utils.after
 import kotlin.reflect.*
 import kotlin.reflect.jvm.javaType
 
@@ -14,7 +16,9 @@ import kotlin.reflect.jvm.javaType
  *
  * Within the body of the class, parser-valued fields will be indexed by the name of the property.
  * This enables creating dynamically checked recursive references via [ref] or its [not] shorthand.
- * (This is enacted by the call to `READY()`.
+ * If the same parser is assigned to multiple properties, keep the first name as the display name
+ * and use the other names as referable aliases.
+ * (This is enacted by the call to `READY()`).
  *
  * The class also bundles special provisions for tokenization.  The basic rule is that at each input
  * position, there is at most one token (i.e. any ambiguities must be resolved at the lexical level
@@ -36,7 +40,7 @@ abstract class Grammar
     /// SETTINGS ///////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The parser used to skip whitespace after matching a token.
+     * The parser used to skip whitespace after matching a token or a [plusAssign] string.
      */
     open val whitespace = ZeroMore(CharPred(Char::isWhitespace))
 
@@ -63,9 +67,9 @@ abstract class Grammar
     open val tokenDisambiguation = ORDERING;
 
     /**
-     * Returns the stack on which tokens should be pushed (by default: [Context.stack]).
+     * Returns the stack on which tokens and AST nodes should be pushed (by default: [Context.stack]).
      */
-    open fun tokenStack(ctx: Context): Stack<in Token<*>> = ctx.stack
+    open fun tokenStack(ctx: Context): Stack<Any> = ctx.stack
 
     /// NAME / PARSER MAPPING //////////////////////////////////////////////////////////////////////
 
@@ -100,7 +104,10 @@ abstract class Grammar
                 val parser = it.call(this@Grammar) as Parser?
                 parser ?: throw Error(
                      "`override val status = READY()` must appear **last** in the grammar.")
-                parser.name = it.name
+
+                // Multiple assignment from the same parser: keep the first name, use the others
+                // as aliases.
+                parser.name = parser.name ?: it.name
                 map.put(it.name, parser)
             }
 
@@ -136,21 +143,21 @@ abstract class Grammar
     private var typedTokenParsers = mutableListOf<Parser>()
 
     /**
-     * Returns a parser for a token whose syntax is defined by the [syntax] parser and whose value
-     * is built by [value], a function that takes the string matched by [syntax] as parameter.
+     * Returns a parser for a token whose syntax is defined by this parser and whose value
+     * is built by [value], a function that takes the string matched by this parser as parameter.
      */
-    fun <T: Any> token(syntax: Parser, value: (String) -> T): Parser
+    fun <T: Any> Parser.token(value: (String) -> T): Parser
     {
         val type = nextTokenType ++
 
         /** See [typedTokenParsers]. */
-        typedTokenParsers.add(Parser(syntax) { ctx ->
+        typedTokenParsers.add(Parser(this) { ctx ->
             val pos = ctx.pos
-            syntax.parse(ctx).ifSuccess {
+            this.parse(ctx).ifSuccess {
                 tokenStack(ctx).push(
                     Token(type, pos, ctx.pos, value(ctx.text.substring(pos, ctx.pos))))
                 whitespace.parse(ctx)
-        }   })
+            }   })
 
         /**
          * Returns the requested parser, which will match the next token (using the [TokenCache]
@@ -173,6 +180,34 @@ abstract class Grammar
         }
     }
 
+    /// AST-BUILDING ///////////////////////////////////////////////////////////////////////////////
+
+    fun Parser.build(node: StackAccess.(StackAccess) -> Any) = Parser { ctx ->
+        val stack = StackAccess(tokenStack(ctx))
+        this@build.parse(ctx)
+            .ifSuccess { stack.push(stack.node(stack)) }
+            .after { stack.commit() }
+    }
+
+    fun Parser.stack(node: StackAccess.(StackAccess) -> Unit) = Parser { ctx ->
+        val stack = StackAccess(tokenStack(ctx))
+        this@stack.parse(ctx)
+            .ifSuccess { stack.node(stack) }
+            .after { stack.commit() }
+    }
+
+    /**
+     *
+     */
+    fun Parser.wrap(): Parser =
+        build { get<Any>(0).let { if (it != null) Some(it) else None } }
+
+    /**
+     * TODO type
+     */
+    fun <T: Any> Parser.collect(): Parser =
+        build { it.rest<Any>() }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -190,6 +225,11 @@ abstract class Grammar
      * `!"str" is a shorthand for `ref("str")` (see [ref]).
      */
     operator fun String.not(): Ref = ref(this)
+
+    /**
+     * +"str" is a shorthand for `Seq(Str("str"), whitespace)`.
+     */
+    operator fun String.unaryPlus() = Seq(Str(this), whitespace)
 
     /**
      * Returns the parse named [name] in this grammar.
