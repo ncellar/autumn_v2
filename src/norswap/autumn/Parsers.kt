@@ -314,3 +314,13 @@ fun Parser.afterPrintingState() = Parser(this) { ctx ->
 fun Parser.beforePrintingState() = Parser(this) { ctx ->
     this@beforePrintingState.parse(ctx).after { ctx.logStream.println(ctx.stateString()) }
 }
+
+/// Misc ///////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Returns a parser that uses [generator] to generate a parser at parse-time, run it and returns
+ * and its result.
+ */
+fun Dynamic(generator: (Context) -> Parser) = Parser { ctx -> generator(ctx).parse(ctx) }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
