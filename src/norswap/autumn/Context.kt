@@ -36,6 +36,11 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
     val text: String = input + "\u0000"
 
     /**
+     * Syntactic sugar for `this.text.substring(origin, this.pos)`.
+     */
+    fun textFrom(origin: Int) = text.substring(origin, pos)
+
+    /**
      * The line map can be used to convert between input positions and
      */
     val lineMap by lazy { LineMap(text) }
