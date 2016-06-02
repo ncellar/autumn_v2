@@ -12,7 +12,7 @@ import norswap.violin.stream.*
  * not allow the full range of manipulation supported by [ValueStack].
  *
  * Within Autumn, StackAccess is used as both the receiver and first parameter (to enable the
- * `it` syntax) to the callback passed to [Grammar.build] and [Grammar.stack].
+ * `it` syntax) to the callback passed to [Grammar.build] and [Grammar.withStack].
  *
  * # Lifecycle
  *

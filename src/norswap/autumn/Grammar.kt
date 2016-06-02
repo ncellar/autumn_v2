@@ -182,31 +182,55 @@ abstract class Grammar
 
     /// AST-BUILDING ///////////////////////////////////////////////////////////////////////////////
 
-    fun Parser.build(node: StackAccess.(StackAccess) -> Any) = Parser { ctx ->
+    /**
+     * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls `node` with a
+     * [StackAccess] wrapped around the result of [tokenStack].
+     */
+    fun Parser.withStack(f: StackAccess.(StackAccess) -> Unit) = Parser(this) { ctx ->
+        val stack = StackAccess(tokenStack(ctx))
+        this@withStack.parse(ctx)
+            .ifSuccess { stack.f(stack) }
+            .after { stack.commit() }
+    }
+
+    /**
+     * Similar to [withStack], but the [node] function returns a item to be pushed on the
+     * stack.
+     */
+    fun Parser.build(node: StackAccess.(StackAccess) -> Any) = Parser(this) { ctx ->
         val stack = StackAccess(tokenStack(ctx))
         this@build.parse(ctx)
             .ifSuccess { stack.push(stack.node(stack)) }
             .after { stack.commit() }
     }
 
-    fun Parser.stack(node: StackAccess.(StackAccess) -> Unit) = Parser { ctx ->
-        val stack = StackAccess(tokenStack(ctx))
-        this@stack.parse(ctx)
-            .ifSuccess { stack.node(stack) }
-            .after { stack.commit() }
+    /**
+     * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with
+     * the matched text as parameter, then push the returned object onto the result of [tokenStack].
+     */
+    fun Parser.buildLeaf(node: (String) -> Any) = Parser(this) { ctx ->
+        val pos = ctx.pos
+        this@buildLeaf.parse(ctx)
+            .ifSuccess { tokenStack(ctx).push(node(ctx.textFrom(ctx.pos))) }
     }
 
     /**
-     *
+     * Syntactic sugar for `Seq(buildLeaf(node), whitespace)`
+     */
+    fun Parser.leaf(node: (String) -> Any) = Seq(buildLeaf(node), whitespace)
+
+    /**
+     * Returns a parser wrapping this parser. If the wrapped parser succeeds, tries to pop an item
+     * from the result of [tokenStack], returning an instance of [Maybe] depending on the result.
      */
     fun Parser.wrap(): Parser =
         build { get<Any>(0).let { if (it != null) Some(it) else None } }
 
     /**
-     * TODO type
+     * Syntactic sugar for `this.build { it.rest<T>() }`.
      */
-    fun <T: Any> Parser.collect(): Parser =
-        build { it.rest<Any>() }
+    inline fun <reified T: Any> Parser.collect(): Parser =
+        build { it.rest<T>() }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
