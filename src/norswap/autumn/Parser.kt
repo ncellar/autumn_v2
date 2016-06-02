@@ -248,6 +248,22 @@ abstract class Parser (vararg val children: Parser)
     /// Utilities ----------------------------------------------------------------------------------
 
     /**
+     * Returns a parser that wraps this parser, returning its result and executing [f] if it is
+     * successful. [f] is passed the input position at which the parser was invoked as second
+     * parameter.
+     */
+    fun ifSuccess(f: (Context, Int) -> Unit) = Parser(this) { ctx ->
+        val pos = ctx.pos
+        this@Parser.parse(ctx).ifSuccess { f(ctx, pos) }
+    }
+
+    /**
+     * Returns a parser that wraps this parser, returning its result and executing [f] if it is
+     * successful. [f] is passed the matched input text as second parameter.
+     */
+    fun ifMatch(f: (Context, String) -> Unit) = ifSuccess { ctx, pos -> f(ctx, ctx.textFrom(pos)) }
+
+    /**
      * Calls [f] after making a snapshot.
      * If the result is [Error], restores the snapshot.
      * Returns the result of [f].
@@ -262,4 +278,6 @@ abstract class Parser (vararg val children: Parser)
      */
     inline fun Context.succeed(cond: Context.() -> Boolean): Result
         = if (cond()) Success else error()
+
+    /// --------------------------------------------------------------------------------------------
 }
