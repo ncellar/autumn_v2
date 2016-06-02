@@ -16,7 +16,7 @@ import norswap.violin.stream.*
  * [Seeds] (left-recursion handling) and [BottomUpStack] (building a result, such as an AST).
  *
  * If you require per-parse global data that never changes, or per-parser mutable state that does
- * not impact parsing, use [ImmutableState].
+ * not impact parsing, use [InertState].
  */
 interface State<Snapshot: Any, Delta: Any>
 {

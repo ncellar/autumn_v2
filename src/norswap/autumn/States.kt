@@ -8,19 +8,19 @@ import norswap.violin.Stack
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * For states that never change, or whose changes do not impact parsing.
- * Use as per-parser global state.
+ * For states that never change, whose changes do not impact parsing, or where backtracking
+ * over state changes never has adverse consequences.
  *
- * We repeat that **his must not impact parsing decisions**. It is meant for immutable data or
- * things like logger state.
+ * !! Carefully check that you're within the above parameter before using this kind of state.
  */
-interface ImmutableState: State<ImmutableState, ImmutableState.SameState> {
+interface InertState<Self: InertState<Self>>: State<Self, InertState.SameState> {
     object SameState
-    override fun snapshot() = this
-    override fun restore(snap: ImmutableState) {}
-    override fun diff(snap: ImmutableState) = SameState
+    override fun snapshot() = this as Self
+    override fun restore(snap: Self) {}
+    override fun diff(snap: Self) = SameState
     override fun merge(delta: SameState) {}
-    override fun equiv(pos: Int, snap: ImmutableState) = this === snap
+    override fun equiv(pos: Int, snap: Self) = this === snap
+    override fun snapshotString(snap: Self, ctx: Context) = "$this"
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

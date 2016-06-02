@@ -22,9 +22,9 @@ data class TokenCacheEntry(
  * This is optional and must be added to the [Context] to be used.
  */
 class TokenCache(val map: MutableMap<Int, TokenCacheEntry> = mutableMapOf())
-: ImmutableState, MutableMap<Int, TokenCacheEntry> by map
+: InertState<TokenCache>, MutableMap<Int, TokenCacheEntry> by map
 {
-    override fun snapshotString(snap: ImmutableState, ctx: Context): String {
+    override fun snapshotString(snap: TokenCache, ctx: Context): String {
         val b = StringBuilder()
         b += "{"
         map.entries
