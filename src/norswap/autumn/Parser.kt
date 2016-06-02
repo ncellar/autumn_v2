@@ -188,8 +188,11 @@ abstract class Parser (vararg val children: Parser)
      * Returns the name of this class, or the name of the function containing the [Parser.invoke]
      * call that created this parser (possibly suffixed by $2, $3, ...) if the function contains
      * more than one [Parser.invoke] invocation.
+     *
+     * You can override this in your parser in order to more precisely define the nature of the
+     * parser (e.g. if a parser class has important parameters).
      */
-    fun definer(): String
+    open fun definer(): String
         = javaClass.simpleName
             .removeSuffix("\$\$inlined\$invoke\$1")
             .replace("\$\$inlined\$invoke", "")
@@ -197,13 +200,13 @@ abstract class Parser (vararg val children: Parser)
     /**
      * Prints the [name] of the Parser, if it has one, and its definer.
      */
-    open fun toStringSimple(): String
+    fun toStringSimple(): String
         = if (name != null) "$name (${definer()})" else definer()
 
     /**
      * Prints the parser: either its [name] and class, or its definer and childrens.
      */
-    override fun toString()
+    final override fun toString()
         = name ?: "${definer()} (${children.joinToString()})"
 
     /// Errors -------------------------------------------------------------------------------------
