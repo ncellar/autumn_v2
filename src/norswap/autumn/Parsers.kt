@@ -1,11 +1,7 @@
 @file:Suppress("PackageDirectoryMismatch")
 package norswap.autumn.parsers
-import norswap.autumn.Context
-import norswap.autumn.Parser
-import norswap.autumn.Result.*
-import norswap.autumn.Result.Error
-import norswap.autumn.Furthest
-import norswap.autumn.tryParse
+import norswap.autumn.*
+import norswap.autumn.result.*
 import norswap.violin.stream.*
 import norswap.violin.utils.after
 

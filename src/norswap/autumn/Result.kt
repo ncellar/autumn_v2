@@ -1,6 +1,6 @@
-@file:Suppress("NOTHING_TO_INLINE")
-package norswap.autumn
-import norswap.autumn.Result.*
+@file:Suppress("NOTHING_TO_INLINE", "PackageDirectoryMismatch")
+package norswap.autumn.result
+import norswap.autumn.*
 import norswap.violin.link.*
 import norswap.violin.stream.*
 import norswap.violin.utils.plusAssign
@@ -9,38 +9,12 @@ import java.util.Comparator
 /**
  * The result of a parser invocation ([Parser.invoke]).
  */
-sealed class Result
+open class Result internal constructor ()
 {
-    /**
-     * The parser invocation was successful: the parser "matched" the input, although it may
-     * not have advanced [Context.pos].
-     */
-    object Success: Result()
-
-    /**
-     * The parser invocation was unsuccessful: the parser didn't "match" the input.
-     * Errors can also be thrown as panics ([Parser.panic]).
-     *
-     * Errors are usually constructed through [Context.error].
-     */
-    open class Error(
-        /**
-         * The position at which the error occurred.
-         */
-        val pos: Int,
-        /**
-         * The message to display to the user for this error. Since most errors are never
-         * shown, making this a lazily-evaluated function is cheaper.
-         */
-        val msg: () -> String
-
-    ) : Result()
-
-    internal class Carrier (val error: Error): Utils.NoStackTrace(null)
-
     override fun toString() = when (this) {
         is Success -> "Successful"
         is Error -> "Error: " + msg()
+        else -> throw Error("impossibru :E !")
     }
 
     /**
@@ -75,6 +49,33 @@ sealed class Result
         else -> this
     }
 }
+
+/**
+ * The parser invocation was successful: the parser "matched" the input, although it may
+ * not have advanced [Context.pos].
+ */
+object Success: Result()
+
+/**
+ * The parser invocation was unsuccessful: the parser didn't "match" the input.
+ * Errors can also be thrown as panics ([Parser.panic]).
+ *
+ * Errors are usually constructed through [Context.error].
+ */
+open class Error(
+    /**
+     * The position at which the error occurred.
+     */
+    val pos: Int,
+    /**
+     * The message to display to the user for this error. Since most errors are never
+     * shown, making this a lazily-evaluated function is cheaper.
+     */
+    val msg: () -> String
+
+): Result()
+
+internal class Carrier (val error: Error): Utils.NoStackTrace(null)
 
 /**
  * Runs [body] and returns its result. If it panics ([Parser.panic]), return the error if [pred]
@@ -119,7 +120,7 @@ class DebugError(
      */
     val snapshot: Snapshot
 )
-: Result.Error(pos, msg)
+: Error(pos, msg)
 {
     fun locatedParserTrace(): Stream<Pair<StackTraceElement, Parser?>>
         = throwable.stackTrace.stream()

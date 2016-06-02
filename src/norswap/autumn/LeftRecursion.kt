@@ -1,4 +1,5 @@
 package norswap.autumn
+import norswap.autumn.result.*
 import norswap.violin.link.*
 import norswap.violin.stream.*
 import norswap.violin.utils.plusAssign

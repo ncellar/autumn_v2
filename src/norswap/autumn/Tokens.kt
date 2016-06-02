@@ -1,4 +1,5 @@
 package norswap.autumn
+import norswap.autumn.result.*
 import norswap.violin.utils.plusAssign
 import norswap.violin.stream.*
 
@@ -32,7 +33,7 @@ class TokenCache(val map: MutableMap<Int, TokenCacheEntry> = mutableMapOf())
             .stream()
             .each {
                 val (k, v) = it
-                if (v.result is Result.Success)
+                if (v.result is Success)
                     b += "\n  from ${ctx.rangeToString(k, v.end)}: ${v.token.toString()}"
                 else
                     b += "\n  at ${ctx.posToString(k)}: ${v.result.toString()}"
