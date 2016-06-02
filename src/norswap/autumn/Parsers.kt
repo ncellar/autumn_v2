@@ -142,22 +142,50 @@ fun OneMore (child: Parser) = Parser(child) { ctx ->
 /**
  * Matches zero or more repetition of [repeat] (that do not match [until]), followed by [until].
  *
- * Equivalent to `Seq(ZeroMore(Seq(Not(until), repeat)), until)`
+ * [matchUntil] (true by default) determines whether [until] is part of the final match.
+ *
+ * [matchSome] (false by default) determines whether at [repeat] should be matched at least once.
+ *
+ * Here are some equivalent parser, depending on the value of parameters:
+ * - matchUntil, matchSome: `Seq(OneMore(Seq(Not(until), repeat)), until)`
+ * - matchUntil, !matchSome: `Seq(ZeroMore(Seq(Not(until), repeat)), until)`
+ * - !matchUntil, matchSome: `OneMore(Seq(Not(until), repeat))`
+ * - !matchUntil, !matchSome: `ZeroMore(Seq(Not(until), repeat))`
  */
-fun Until (repeat: Parser, until: Parser) = Parser(repeat, until) body@ { ctx ->
-    val snapshot = ctx.snapshot()
-    var stop = false
-    var err1: Error? = null
-    while (!stop)
-        until.parse(ctx)
-            .ifSuccess { stop = true }
-            .ifError { err1 = it }
-            .or { repeat.parse(ctx) }
-            .ifError {
-                ctx.restore(snapshot)
-                return@body Furthest.max(err1!!, it)
+class Until (
+    val repeat: Parser,
+    val until: Parser,
+    val matchUntil: Boolean = true,
+    val matchSome: Boolean = false)
+: Parser(repeat, until)
+{
+    override fun _parse_(ctx: Context): Result {
+        val initial = ctx.snapshot()
+        var snapshot = initial
+        var err: Error
+        var cnt = 0
+        while (true) {
+            var res = until.parse(ctx)
+            if (res is Success) break
+            err = res as Error
+            res = repeat.parse(ctx)
+            if (res is Error) {
+                ctx.restore(initial)
+                return Furthest.max(err, res)
             }
-    Success
+            ++ cnt
+            if (!matchUntil) snapshot = ctx.snapshot()
+        }
+        if (matchSome && cnt == 0) {
+            ctx.restore(initial)
+            return ctx.error { "UntilSome did not match any repeatable item" }
+        }
+        ctx.restore(snapshot)
+        return Success
+    }
+
+    override fun definer() = super.definer() +
+        "(${if (!matchUntil) "!" else ""}matchUntil, ${ if (!matchSome) "!" else ""}matchSome)"
 }
 
 /**
