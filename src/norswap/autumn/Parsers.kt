@@ -242,12 +242,6 @@ fun RaiseMsg (msg: Parser.(Context) -> String)
     = Raise { it.error(msg = msg)  }
 
 /**
- * Always fails, using [msg] as the message of the returned error.
- */
-fun RaiseMsg (msg: String)
-    = RaiseMsg { msg }
-
-/**
  * Throws a panic, using [e] to construct the thrown error.
  */
 fun Panic (e: Parser.(Context) -> Error)
@@ -258,12 +252,6 @@ fun Panic (e: Parser.(Context) -> Error)
  */
 fun PanicMsg (msg: Parser.(Context) -> String)
     = Panic { it.error(msg = msg)  }
-
-/**
- * Throws a panic, using [msg] as the message of the returned error.
- */
-fun PanicMsg (msg: String)
-    = PanicMsg { msg }
 
 /**
  * Matches [child], else throws the error it returned.
@@ -292,11 +280,6 @@ fun Parser.orRaise(e: Parser.(Context) -> Error) = Parser(this) { ctx ->
  * Matches this parser, else raises an error with the message returned by [msg].
  */
 fun Parser.orRaiseMsg(msg: Parser.(Context) -> String) = this.orRaise { it.error(msg = msg) }
-
-/**
- * Matches this parser, else raises an error with message [msg].
- */
-fun Parser.orRaiseMsg(msg: String) = this.orRaiseMsg { msg }
 
 /**
  * Returns a parser that matches the same as the parser it is called on, but logs

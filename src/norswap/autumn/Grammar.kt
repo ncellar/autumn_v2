@@ -115,8 +115,8 @@ abstract class Grammar
             val array = typedTokenParsers.toTypedArray()
 
             tokenParser = when(tokenDisambiguation) {
-                ORDERING        -> Choice  (*array).orRaiseMsg(msg)
-                LONGEST_MATCH   -> Longest (*array).orRaiseMsg(msg)
+                ORDERING        -> Choice  (*array).orRaiseMsg { msg }
+                LONGEST_MATCH   -> Longest (*array).orRaiseMsg { msg }
     }   }   }
 
     /**
