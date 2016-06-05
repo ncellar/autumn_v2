@@ -189,11 +189,8 @@ abstract class Grammar
      * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with
      * the matched text as parameter, then push the returned object onto [Context.stack].
      */
-    fun Parser.buildLeaf(node: (String) -> Any) = Parser(this) { ctx ->
-        val pos = ctx.pos
-        this@buildLeaf.parse(ctx)
-            .ifSuccess { ctx.stack.push(node(ctx.textFrom(ctx.pos))) }
-    }
+    fun Parser.buildLeaf(node: (String) -> Any) =
+        ifMatch { stack.push(node(it)) }
 
     /**
      * Syntactic sugar for `Seq(buildLeaf(node), whitespace)`
