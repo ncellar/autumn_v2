@@ -272,14 +272,14 @@ fun Chill (child: Parser, pred: (Error) -> Boolean = { true }) = Parser(child) {
 /**
  * Matches this parser, else raises the error returned by [e].
  */
-fun Parser.orRaise(e: Parser.(Context) -> Error) = Parser(this) { ctx ->
+infix fun Parser.orRaise(e: Parser.(Context) -> Error) = Parser(this) { ctx ->
     ctx.parse(this@orRaise).or { e(ctx) }
 }
 
 /**
  * Matches this parser, else raises an error with the message returned by [msg].
  */
-fun Parser.orRaiseMsg(msg: Parser.(Context) -> String) = this.orRaise { it.error(msg = msg) }
+infix fun Parser.orRaiseMsg(msg: Parser.(Context) -> String) = this.orRaise { it.error(msg = msg) }
 
 /**
  * Returns a parser that matches the same as the parser it is called on, but logs
@@ -306,7 +306,6 @@ fun Parser.beforePrintingState() = Parser(this) { ctx ->
  */
 fun Dynamic(generator: (Context) -> Parser) = Parser { ctx -> generator(ctx).parse(ctx) }
 
-
 /**
  * Always succeeds after calling [f].
  */
@@ -324,5 +323,22 @@ fun Predicate(err: Parser.(Context) -> Error = { it.error() }, pred: Context.() 
  */
 fun PredicateMsg(pred: Context.() -> Boolean, msg: Parser.(Context) -> String)
     = Parser { ctx -> if (ctx.pred()) Success else ctx.error(msg) }
+
+/**
+ * Returns a parser that wraps this parser, returning its result and executing [f] if it is
+ * successful. [f] is passed the input position at which the parser was invoked as second
+ * parameter.
+ */
+infix fun Parser.ifSuccess(f: (ctx: Context, start: Int) -> Unit) = Parser(this) { ctx ->
+    val pos = ctx.pos
+    this@ifSuccess.parse(ctx).ifSuccess { f(ctx, pos) }
+}
+
+/**
+ * Returns a parser that wraps this parser, returning its result and executing [f] if it is
+ * successful. [f] is passed the matched input text as second parameter.
+ */
+infix fun Parser.ifMatch(f: (ctx: Context, str: String) -> Unit) =
+    ifSuccess { ctx, pos -> f(ctx, ctx.textFrom(pos)) }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
