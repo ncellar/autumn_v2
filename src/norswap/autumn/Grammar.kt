@@ -1,6 +1,7 @@
 package norswap.autumn
 import norswap.autumn.parsers.*
 import norswap.autumn.Grammar.TokenDisambiguation.*
+import norswap.autumn.result.Result
 import norswap.violin.maybe.*
 import norswap.violin.stream.*
 import norswap.violin.utils.after
@@ -19,6 +20,11 @@ import kotlin.reflect.jvm.javaType
  * and use the other names as referable aliases.
  * (This is enacted by the call to `READY()`).
  *
+ * The [state] parameter must contain constructor for the states that are required to correctly
+ * parse the grammar.
+ *
+ * # Tokenization
+ *
  * The class also bundles special provisions for tokenization.  The basic rule is that at each input
  * position, there is at most one token (i.e. any ambiguities must be resolved at the lexical level
  * (the level of the token)). Users can register new token types with the [token] function, which
@@ -32,7 +38,7 @@ import kotlin.reflect.jvm.javaType
  *
  * You can enable caching for tokens by passing a [TokenCache] to the [Context].
  */
-abstract class Grammar
+abstract class Grammar(vararg val states: () -> State<*, *>)
 {
     /// SETTINGS ///////////////////////////////////////////////////////////////////////////////////
 
@@ -62,6 +68,11 @@ abstract class Grammar
      * token type.
      */
     open val tokenDisambiguation = ORDERING;
+
+    /**
+     * The root parser for this grammar. Used by [parse].
+     */
+    abstract val root: Parser
 
     /// NAME / PARSER MAPPING //////////////////////////////////////////////////////////////////////
 
@@ -238,6 +249,13 @@ abstract class Grammar
      */
     operator fun get(name: String): Parser
         = map[name] ?: throw Error("unknown parser: $name")
+
+    /**
+     * Parse the given [text] using this grammar's [root], building a context that contains
+     * this grammar's required [states] as well as [moreStates].
+     */
+    fun parse(text: String, vararg moreStates: State<*, *>): Result
+        = Context(text, *(states.map { it() }.toTypedArray() + moreStates)).parse(root)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 }
