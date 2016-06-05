@@ -329,16 +329,16 @@ fun PredicateMsg(pred: Context.() -> Boolean, msg: Parser.(Context) -> String)
  * successful. [f] is passed the input position at which the parser was invoked as second
  * parameter.
  */
-infix fun Parser.ifSuccess(f: (ctx: Context, start: Int) -> Unit) = Parser(this) { ctx ->
+infix fun Parser.ifSuccess(f: Context.(start: Int) -> Unit) = Parser(this) { ctx ->
     val pos = ctx.pos
-    this@ifSuccess.parse(ctx).ifSuccess { f(ctx, pos) }
+    this@ifSuccess.parse(ctx).ifSuccess { ctx.f(pos) }
 }
 
 /**
  * Returns a parser that wraps this parser, returning its result and executing [f] if it is
  * successful. [f] is passed the matched input text as second parameter.
  */
-infix fun Parser.ifMatch(f: (ctx: Context, str: String) -> Unit) =
-    ifSuccess { ctx, pos -> f(ctx, ctx.textFrom(pos)) }
+infix fun Parser.ifMatch(f: Context.(str: String) -> Unit) =
+    ifSuccess { start -> f(textFrom(start)) }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
