@@ -1,7 +1,6 @@
 package norswap.autumn
 import norswap.autumn.parsers.*
 import norswap.autumn.Grammar.TokenDisambiguation.*
-import norswap.violin.Stack
 import norswap.violin.maybe.*
 import norswap.violin.stream.*
 import norswap.violin.utils.after
@@ -29,11 +28,9 @@ import kotlin.reflect.jvm.javaType
  * position. If multiple tokens could match, they are disambiguated by one of two methods
  * ([ORDERING] or [LONGEST_MATCH], depending on the value of [tokenDisambiguation]. The parsers
  * then check if the matched token is of the required type. If so, they push a [Token] value onto
- * the stack returned by [tokenStack], else they fail.
+ * [Context.stack].
  *
  * You can enable caching for tokens by passing a [TokenCache] to the [Context].
- *
- * !! Compatibility with Java has yet to be investigated.
  */
 abstract class Grammar
 {
@@ -66,11 +63,6 @@ abstract class Grammar
      */
     open val tokenDisambiguation = ORDERING;
 
-    /**
-     * Returns the stack on which tokens and AST nodes should be pushed (by default: [Context.stack]).
-     */
-    open fun tokenStack(ctx: Context): Stack<Any> = ctx.stack
-
     /// NAME / PARSER MAPPING //////////////////////////////////////////////////////////////////////
 
     /**
@@ -95,8 +87,8 @@ abstract class Grammar
     private val map = mutableMapOf<String, Parser>()
 
     /**
-     * `override val status = READY()` at the end of the grammar assigns its name to each parser,
-     * and fills [map].
+     * Adding `override val status = READY()` at the end of the grammar assigns its
+     * name to each parser and fills [map].
      */
     protected inner class READY() {
         init {
@@ -129,7 +121,7 @@ abstract class Grammar
     /**
      * This it the parser that matches a single token (of any kind).
      */
-    lateinit var tokenParser: Parser
+    private lateinit var tokenParser: Parser
 
     /**
      * The token type ID for the next token to be registered.
@@ -154,27 +146,26 @@ abstract class Grammar
         typedTokenParsers.add(Parser(this) { ctx ->
             val pos = ctx.pos
             this.parse(ctx).ifSuccess {
-                tokenStack(ctx).push(
+                ctx.stack.push(
                     Token(type, pos, ctx.pos, value(ctx.text.substring(pos, ctx.pos))))
                 whitespace.parse(ctx)
             }   })
 
         /**
          * Returns the requested parser, which will match the next token (using the [TokenCache]
-         * if possible, or with [tokenParser]), then ensure the matched token is of
+         * if available, or with [tokenParser]), then ensure the matched token is of
          * the requested type.
          */
         return Parser body@ { ctx ->
             val pos = ctx.pos
-            val stack = tokenStack(ctx)
             val cache: TokenCache? = ctx.state_()
             cache?.get(pos) ?.let {
                 ctx.pos = it.end
-                if (it.token != null) stack.push(it.token)
+                if (it.token != null) ctx.stack.push(it.token)
                 return@body it.result
             }
             val result = tokenParser.parse(ctx)
-            val token = stack.peek() as Token<*>?
+            val token = ctx.stack.peek() as Token<*>?
             cache?.put(pos, TokenCacheEntry(result, ctx.pos, token))
             return@body ctx.succeed { token?.type == type }
         }
@@ -183,35 +174,25 @@ abstract class Grammar
     /// AST-BUILDING ///////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls `node` with a
-     * [StackAccess] wrapped around the result of [tokenStack].
+     * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with a
+     * [StackAccess] wrapped around [Context.stack]. If [node] returns a non-null value, push it
+     * onto the stack.
      */
-    fun Parser.withStack(f: StackAccess.(StackAccess) -> Unit) = Parser(this) { ctx ->
-        val stack = StackAccess(tokenStack(ctx))
-        this@withStack.parse(ctx)
-            .ifSuccess { stack.f(stack) }
-            .after { stack.commit() }
-    }
-
-    /**
-     * Similar to [withStack], but the [node] function returns a item to be pushed on the
-     * stack.
-     */
-    fun Parser.build(node: StackAccess.(StackAccess) -> Any) = Parser(this) { ctx ->
-        val stack = StackAccess(tokenStack(ctx))
+    fun Parser.build(node: StackAccess.(StackAccess) -> Any?) = Parser(this) { ctx ->
+        val stack = StackAccess(ctx.stack)
         this@build.parse(ctx)
-            .ifSuccess { stack.push(stack.node(stack)) }
+            .ifSuccess { stack.node(stack) ?. let { stack.push(it) } }
             .after { stack.commit() }
     }
 
     /**
      * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with
-     * the matched text as parameter, then push the returned object onto the result of [tokenStack].
+     * the matched text as parameter, then push the returned object onto [Context.stack].
      */
     fun Parser.buildLeaf(node: (String) -> Any) = Parser(this) { ctx ->
         val pos = ctx.pos
         this@buildLeaf.parse(ctx)
-            .ifSuccess { tokenStack(ctx).push(node(ctx.textFrom(ctx.pos))) }
+            .ifSuccess { ctx.stack.push(node(ctx.textFrom(ctx.pos))) }
     }
 
     /**
@@ -221,7 +202,7 @@ abstract class Grammar
 
     /**
      * Returns a parser wrapping this parser. If the wrapped parser succeeds, tries to pop an item
-     * from the result of [tokenStack], returning an instance of [Maybe] depending on the result.
+     * from the result of [stack], returning an instance of [Maybe] depending on the result.
      */
     fun Parser.wrap(): Parser =
         build { get<Any>(0).let { if (it != null) Some(it) else None } }
