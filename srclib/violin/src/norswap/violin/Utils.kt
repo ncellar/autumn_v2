@@ -38,14 +38,11 @@ fun <T> Any?.cast() = this as T
  * Like [substring] but allows [start] and [end] to be negative numbers, which count down from the
  * end of the string. i.e., a negative [start] is equivalent to `this.length - start`.
  *
- * If [end] is [END] (== [Int.MAX_VALUE]) then proceed as though `end == this.length`.
+ * The [end] bound is exclusive if positive, inclusive if negative.
+ * Hence `str[x, str.length] == str[x, -1]` always holds.
+ * Another way to put it is that a negative [end] is equivalent to `this.length - end + 1`.
  */
 operator fun CharSequence.get(start: Int, end: Int = length) =
     substring(
-        when { start >= 0 -> start ; else -> length - start},
-        when { end == END -> length ; end >= 0 -> end ; else -> length - end })
-
-/**
- * Serves as a guard to [CharSequence.get].
- */
-val END = Int.MAX_VALUE
+        if (start >= 0) start else length - start,
+        if (end >= 0) end else length - end + 1)
