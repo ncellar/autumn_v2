@@ -205,7 +205,7 @@ abstract class Grammar
      * from the result of [stack], returning an instance of [Maybe] depending on the result.
      */
     fun Parser.wrap(): Parser =
-        build { get<Any>(0).let { if (it != null) Some(it) else None } }
+        build { Maybe(get<Any>(0)) }
 
     /**
      * Syntactic sugar for `this.build { it.rest<T>() }`.
