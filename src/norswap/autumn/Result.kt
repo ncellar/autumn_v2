@@ -20,7 +20,7 @@ open class Result internal constructor ()
     /**
      * Return the result of [other] if this is an [Error], else [Success].
      */
-    inline fun or(other: () -> Result) = when (this) {
+    infix inline fun or(other: () -> Result) = when (this) {
         is Success -> this
         else -> other()
     }
