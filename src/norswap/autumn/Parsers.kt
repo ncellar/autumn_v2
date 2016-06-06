@@ -2,6 +2,7 @@
 package norswap.autumn.parsers
 import norswap.autumn.*
 import norswap.autumn.result.*
+import norswap.violin.maybe.Maybe
 import norswap.violin.stream.*
 import norswap.violin.utils.after
 
@@ -297,6 +298,49 @@ fun Parser.afterPrintingState() = Parser(this) { ctx ->
 fun Parser.beforePrintingState() = Parser(this) { ctx ->
     this@beforePrintingState.parse(ctx).after { ctx.logStream.println(ctx.stateString()) }
 }
+
+/// AST Building ///////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with a
+ * [StackAccess] wrapped around [Context.stack]. If [node] returns a non-null value, push it
+ * onto the stack.
+ */
+fun Parser.build(node: StackAccess.(StackAccess) -> Any?) = Parser(this) { ctx ->
+    val stack = StackAccess(ctx.stack)
+    this@build.parse(ctx)
+        .ifSuccess { stack.node(stack) ?. let { stack.push(it) } }
+        .after { stack.commit() }
+}
+
+/**
+ * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with
+ * the matched text as parameter, then push the returned object onto [Context.stack].
+ *
+ * Also see [Grammar.leaf].
+ */
+fun Parser.buildLeaf(node: (String) -> Any) =
+    ifMatch { stack.push(node(it)) }
+
+/**
+ * Returns a parser wrapping this parser. If the wrapped parser succeeds, tries to pop an item
+ * from the result of [stack], returning an instance of [Maybe] depending on the result.
+ */
+fun Parser.maybe(): Parser =
+    build { Maybe(get<Any>(0)) }
+
+/**
+ * Same as [Optional] but pushes a boolean on the stack depending on whether the parser matched.
+ */
+fun Parser.asBool() = Parser { ctx ->
+    this.parse(ctx) or { Success } after { ctx.stack.push(it == Success) }
+}
+
+/**
+ * Syntactic sugar for `this.build { it.rest<T>() }`.
+ */
+inline fun <reified T: Any> Parser.collect(): Parser =
+    build { it.rest<T>() }
 
 /// Misc ///////////////////////////////////////////////////////////////////////////////////////////
 

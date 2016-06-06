@@ -2,9 +2,7 @@ package norswap.autumn
 import norswap.autumn.parsers.*
 import norswap.autumn.Grammar.TokenDisambiguation.*
 import norswap.autumn.result.Result
-import norswap.violin.maybe.*
 import norswap.violin.stream.*
-import norswap.violin.utils.after
 import kotlin.reflect.*
 import kotlin.reflect.jvm.javaType
 
@@ -182,45 +180,6 @@ abstract class Grammar(vararg val states: () -> State<*, *>)
         }
     }
 
-    /// AST-BUILDING ///////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with a
-     * [StackAccess] wrapped around [Context.stack]. If [node] returns a non-null value, push it
-     * onto the stack.
-     */
-    fun Parser.build(node: StackAccess.(StackAccess) -> Any?) = Parser(this) { ctx ->
-        val stack = StackAccess(ctx.stack)
-        this@build.parse(ctx)
-            .ifSuccess { stack.node(stack) ?. let { stack.push(it) } }
-            .after { stack.commit() }
-    }
-
-    /**
-     * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with
-     * the matched text as parameter, then push the returned object onto [Context.stack].
-     */
-    fun Parser.buildLeaf(node: (String) -> Any) =
-        ifMatch { stack.push(node(it)) }
-
-    /**
-     * Syntactic sugar for `Seq(buildLeaf(node), whitespace)`
-     */
-    fun Parser.leaf(node: (String) -> Any) = Seq(buildLeaf(node), whitespace)
-
-    /**
-     * Returns a parser wrapping this parser. If the wrapped parser succeeds, tries to pop an item
-     * from the result of [stack], returning an instance of [Maybe] depending on the result.
-     */
-    fun Parser.wrap(): Parser =
-        build { Maybe(get<Any>(0)) }
-
-    /**
-     * Syntactic sugar for `this.build { it.rest<T>() }`.
-     */
-    inline fun <reified T: Any> Parser.collect(): Parser =
-        build { it.rest<T>() }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -256,6 +215,11 @@ abstract class Grammar(vararg val states: () -> State<*, *>)
      */
     fun parse(text: String, vararg moreStates: State<*, *>): Result
         = Context(text, *(states.map { it() }.toTypedArray() + moreStates)).parse(root)
+
+    /**
+     * Syntactic sugar for `Seq(buildLeaf(node), whitespace)` ([buildLeaf]).
+     */
+    fun Parser.leaf(node: (String) -> Any) = Seq(buildLeaf(node), whitespace)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 }
