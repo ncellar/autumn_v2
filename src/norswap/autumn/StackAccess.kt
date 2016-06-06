@@ -33,7 +33,7 @@ import norswap.violin.stream.*
  * StackAccess also implement [PeekStream], which you can use to iterate over the items
  * in the stack. The Stream interface does not interfere with [get].
  *
- * The convenience methods [invoke], [unwrap] and [rest] build on this interface
+ * The convenience methods [invoke], [maybe] and [rest] build on this interface
  * to form a convenient stack access DSL.
  *
  * The stack depth of the next item that will be returned by [next] is available as [cur].
@@ -99,12 +99,12 @@ class StackAccess(val stack: Stack<Any>): PeekStream<Any>
      * Uses [invoke] to retrieve an instance of `Maybe<T>` ([Maybe]) and returns
      * a corresponding nullable (through [Maybe.invoke]).
      */
-    inline fun <T: Any> unwrap(): T? = unwrap(cur ++)
+    inline fun <T: Any> maybe(): T? = unwrap(cur ++)
 
     /**
-     * Returns the remainder of the stack as an array of the specified type.
+     * Returns the remainder of the stack as a list of the specified type.
      */
-    inline fun <reified T: Any> rest(): Array<T> = map { it as T }.array()
+    inline fun <reified T: Any> rest(): List<T> = map { it as T }.list()
 
     /**
      * Push an item on the stack. Pushes are stored on the side and are only committed after
