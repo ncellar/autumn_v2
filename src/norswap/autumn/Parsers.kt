@@ -333,7 +333,7 @@ fun Parser.maybe(): Parser =
  * Same as [Optional] but pushes a boolean on the stack depending on whether the parser matched.
  */
 fun Parser.asBool() = Parser { ctx ->
-    this.parse(ctx) or { Success } after { ctx.stack.push(it == Success) }
+    this@asBool.parse(ctx) or { Success } after { ctx.stack.push(it == Success) }
 }
 
 /**
