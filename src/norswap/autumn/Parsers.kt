@@ -137,7 +137,7 @@ fun ZeroMore (child: Parser) = Parser(child) { ctx ->
  * Fails if no invocation succeeds.
  */
 fun OneMore (child: Parser) = Parser(child) { ctx ->
-    child.parse(ctx).and { while (child.parse(ctx) is Success); Success }
+    child.parse(ctx) and { while (child.parse(ctx) is Success); Success }
 }
 
 /**

@@ -130,8 +130,6 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
 
     // State Retrieval -------------------------------------------------------------------------
 
-
-
     /**
      * Returns the state instance of the class given by the type parameter or by [klass], if any,
      * or throw an exception.
