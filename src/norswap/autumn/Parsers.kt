@@ -113,8 +113,11 @@ fun Not (child: Parser) = Parser(child) { ctx ->
  * Matches the successful sequential invocation of all parsers in [children], else fails.
  */
 fun Seq (vararg children: Parser) = Parser(*children) { ctx ->
-    children.stream().map { it.parse(ctx) }
+    val snapshot = ctx.snapshot()
+    children.stream()
+        .map { it.parse(ctx) }
         .first { it is Error }
+        ?.apply { ctx.restore(snapshot) }
         ?: Success
 }
 
