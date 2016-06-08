@@ -263,5 +263,14 @@ abstract class Parser (vararg val children: Parser)
     inline fun Context.succeed(cond: Context.() -> Boolean): Result
         = if (cond()) Success else error()
 
+    /**
+     * Shorthand for `if (cond()) Success else error(msg)` (see [error]).
+     */
+    inline fun Context.succeed(
+        cond: Context.() -> Boolean,
+        noinline msg: Parser.(Context) -> String)
+    : Result
+        = if (cond()) Success else error(msg)
+
     /// --------------------------------------------------------------------------------------------
 }
