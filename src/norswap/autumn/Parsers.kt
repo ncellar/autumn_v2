@@ -54,7 +54,8 @@ fun Str (str: String) = Parser { ctx ->
  * Matches the first successful parser in [children], else fails.
  */
 fun Choice (vararg children: Parser) = Parser(*children) { ctx ->
-    children.stream().map { it.parse(ctx) }
+    children.stream()
+        .map { it.parse(ctx) }
         .upThrough { it is Success }
         .maxWith(Furthest)
         ?: ctx.error { "empty choice: ${toStringSimple()}" }
@@ -372,20 +373,37 @@ fun PredicateMsg(pred: Context.() -> Boolean, msg: Parser.(Context) -> String)
     = Parser { ctx -> if (ctx.pred()) Success else ctx.error(msg) }
 
 /**
- * Returns a parser that wraps this parser, returning its result and executing [f] if it is
- * successful. [f] is passed the input position at which the parser was invoked as second
- * parameter.
+ * Returns a parser that wraps this parser, executing it then, if successful, returning the result
+ * of [f]. [f] is passed the input position at which the parser was invoked as second parameter.
  */
-infix fun Parser.ifSuccess(f: Context.(start: Int) -> Unit) = Parser(this) { ctx ->
-    val pos = ctx.pos
-    this@ifSuccess.parse(ctx).ifSuccess { ctx.f(pos) }
+infix fun Parser.ifSuccessThen(f: Parser.(ctx: Context, start: Int) -> Result) = Parser(this) { ctx ->
+    val start = ctx.pos
+    this@ifSuccessThen.parse(ctx) and { f(ctx, start) }
 }
 
 /**
- * Returns a parser that wraps this parser, returning its result and executing [f] if it is
- * successful. [f] is passed the matched input text as second parameter.
+ * Returns a parser that wraps this parser, executing it then, if successful, returning the result
+ * of [f]. [f] is passed the matched input text as second parameter.
  */
-infix fun Parser.ifMatch(f: Context.(str: String) -> Unit) =
-    ifSuccess { start -> f(textFrom(start)) }
+infix fun Parser.ifMatchThen(f: Parser.(ctx: Context, str: String) -> Result) = Parser(this) { ctx ->
+    val start = ctx.pos
+    this@ifMatchThen.parse(ctx) and { f(ctx, ctx.textFrom(start)) }
+}
+
+/**
+ * Like [ifSuccessThen] but [f] always succeeds.
+ */
+infix fun Parser.ifSuccess(f: Context.(start: Int) -> Unit) = Parser(this) { ctx ->
+    val start = ctx.pos
+    this@ifSuccess.parse(ctx).ifSuccess { ctx.f(start) }
+}
+
+/**
+ * Like [ifMatchThen] but [f] always succeeds.
+ */
+infix fun Parser.ifMatch(f: Context.(str: String) -> Unit) = Parser(this) { ctx ->
+    val start = ctx.pos
+    this@ifMatch.parse(ctx).ifSuccess { ctx.f(ctx.textFrom(start)) }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
