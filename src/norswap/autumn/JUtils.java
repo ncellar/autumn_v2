@@ -1,6 +1,6 @@
 package norswap.autumn;
 
-public class Utils
+public class JUtils
 {
     /**
      * An exception type that does not create a stack trace when instantiated.

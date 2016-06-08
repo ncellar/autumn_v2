@@ -75,7 +75,7 @@ open class Error(
 
 ): Result()
 
-internal class Carrier (val error: Error): Utils.NoStackTrace(null)
+internal class Carrier (val error: Error): JUtils.NoStackTrace(null)
 
 /**
  * Runs [body] and returns its result. If it panics ([Parser.panic]), return the error if [pred]
