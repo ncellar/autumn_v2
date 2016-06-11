@@ -1,6 +1,4 @@
-@file:Suppress("NOTHING_TO_INLINE", "PackageDirectoryMismatch")
-package norswap.autumn.result
-import norswap.autumn.*
+package norswap.autumn
 import norswap.violin.link.*
 import norswap.violin.stream.*
 import norswap.violin.utils.plusAssign

@@ -1,7 +1,6 @@
 package norswap.autumn
 import norswap.autumn.parsers.*
 import norswap.autumn.Grammar.TokenDisambiguation.*
-import norswap.autumn.result.Result
 import norswap.violin.stream.*
 import kotlin.reflect.*
 import kotlin.reflect.jvm.javaType

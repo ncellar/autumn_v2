@@ -1,5 +1,4 @@
 package norswap.autumn
-import norswap.autumn.result.*
 import norswap.violin.utils.after
 
 /**
