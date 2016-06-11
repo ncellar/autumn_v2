@@ -26,13 +26,16 @@ interface InertState<Self: InertState<Self>>: State<Self, InertState.SameState> 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * The actual state is held in the container [C], which is copied wholesale when snapshotting,
+ * The actual state is held in the container [C], which is copied wholesale when snapshot,
  * diffing, restoring and merging. This works well for states that just comprise a few fixed fields.
+ *
+ * Two copy states are equivalent only if their content are identical,
+ * hence [snapshot] == [diff] and [restore] == [merge].
  */
 open class CopyState<C: Copyable>(var get: C): State<C, C> {
     override fun snapshot(): C = get.copycast()
     override fun restore(snap: C) { get = snap.copycast() }
-    override fun diff(snap: C) = snap
+    override fun diff(snap: C): C = get.copycast()
     override fun merge(delta: C) { get = delta.copycast() }
     override fun equiv(pos: Int, snap: C) = this == snap
     override fun snapshotString(snap: C, ctx: Context) = "$get"
@@ -42,12 +45,39 @@ open class CopyState<C: Copyable>(var get: C): State<C, C> {
 
 /**
  * Pass value between parsers by pushing and popping them on the stack.
+ *
+ * Two stacks are equivalent only if they are identical,
+ * hence [snapshot] == [diff] and [restore] == [merge].
  */
 open class ValueStack<T: Any> (private var stack: LinkList<T> = LinkList())
 : State<LinkList<T>, LinkList<T>>, Stack<T> by stack
 {
     override fun snapshot() = stack.clone()
+    override fun restore(snap: LinkList<T>) { stack = snap.clone() }
+    override fun diff(snap: LinkList<T>): LinkList<T> = stack.clone()
+    override fun merge(delta: LinkList<T>) { stack = delta.clone() }
+    override fun equiv(pos: Int, snap: LinkList<T>) = stack == snap
+    override fun snapshotString(snap: LinkList<T>, ctx: Context) = "$snap"
+}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * A stack with a special restriction: you can't call pass a snapshot to any operations if you might
+ * have popped items from the stack since the snapshot was taken.
+ *
+ * Given that a parser does not know how its ancestors will use state operations, this means that
+ * a parser can only pop objects that were pushed on the stack by itself and its children.
+ *
+ * !! These properties must be enforced by the user.
+ *
+ * The properties are naturally respected when using the stack to build an AST
+ * in a bottom-up fashion.
+ */
+open class BottomUpStack<T: Any>(private var stack: LinkList<T> = LinkList())
+: State<LinkList<T>, LinkList<T>>, Stack<T> by stack
+{
+    override fun snapshot() = stack.clone()
     override fun restore(snap: LinkList<T>) { stack = snap.clone() }
 
     override fun diff(snap: LinkList<T>): LinkList<T> {
@@ -59,51 +89,13 @@ open class ValueStack<T: Any> (private var stack: LinkList<T> = LinkList())
     }
 
     private fun illegalState() =
-        IllegalAccessException("Supplied snapshot could not be a prefix of current stack.")
+        IllegalStateException("Supplied snapshot could not be a prefix of current stack.")
 
     override fun merge(delta: LinkList<T>)
         = delta.stream().each { stack.push(it) }
 
-    override fun equiv(pos: Int, snap: LinkList<T>)
-        = stack == snap
-
-    override fun snapshotString(snap: LinkList<T>, ctx: Context)
-        = "$snap"
-}
-
-/*
-
-NOTE(norswap)
-
-Here is an idea for a more efficient data-structure to support the value stack.
-One would need to test it to see if it has any worth.
-
-Currently, snapshot and restore are O(1), while diff and merge are proportional to the size
-of the diff (O(size_diff)).
-
-Instead of using a linked list, we could use an unbalanced binary tree. Snapshot and restore don't
-move, but merge becomes O(1).
-
-Diff has two distinct phases: first find the end of the prefix (O(size_diff)), then build
-the diff (also O(size_diff)). Using a tree, the first phase does not move, but there is a
-potential gain for building the diff: if we build it as a tree itself, we can reuse one branch of
-the current tree as we make our way up. The downside: you need to build a diff tree instead of a
-Bar, resulting in more allocations and memory use.
-
-I envision the tree as a (value, after, afterafter) triplet. push/pop can be implemented naively
-(emulate a linked list, don't use afterafter) or exploit the tree nature. But in that case, pop
-will cause allocations, which is arguably worse. One unused field seems like the lesser evil.
-
- */
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
- * A stack that is scoped along the tree. A parser can only pop objects that were pushed on the
- * stack by its children. This property must be enforced by the user.
- */
-open class BottomUpStack<T: Any>: ValueStack<T>() {
     override fun equiv(pos: Int, snap: LinkList<T>) = true
+    override fun snapshotString(snap: LinkList<T>, ctx: Context) = "$snap"
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
