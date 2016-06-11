@@ -11,19 +11,16 @@ package norswap.violin.maybe
  *
  * Work with maybe by converting them nullable values with [invoke].
  */
-sealed class Maybe<out T: Any>
+open class Maybe<out T: Any> internal constructor()
 {
-    class Some<out T: Any>(val value: T): Maybe<T>()
-    object None : Maybe<Nothing>()
-
     override fun toString(): String = when (this) {
         is Some<T> -> "Some($value)"
-        is None -> "None"
+        else -> "None"
     }
 
     operator fun invoke(): T? = when (this) {
         is Some<T> -> value
-        is None -> null
+        else -> null
     }
 
     override fun equals(other: Any?)
@@ -33,21 +30,19 @@ sealed class Maybe<out T: Any>
         && value == other.value
 
     override fun hashCode() =
-        if (this is Some) (value ?. hashCode() ?: 0) * 31
+        if (this is Some) value.hashCode() * 31
         else super.hashCode()
 }
 
 /**
- * An alias for [Maybe.None] that can be imported through `import norswap.violin.maybe.*`.
+ * See [Maybe].
  */
-val None = Maybe.None
+class Some<out T: Any>(val value: T): Maybe<T>()
 
 /**
- * An alias for the [Maybe.Some] constructor that can be imported through
- * `import norswap.violin.maybe.*`.
+ * See [Maybe].
  */
-@Suppress("NOTHING_TO_INLINE")
-inline fun <T: Any> Some(value: T) = Maybe.Some(value)
+object None : Maybe<Nothing>()
 
 /**
  * Creates a [Maybe] instance from a nullable object.

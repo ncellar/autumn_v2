@@ -65,6 +65,13 @@ inline fun <reified T: Any> Stream<T>.array(): Array<T>
     = mutableList().toTypedArray()
 
 /**
+ * Pulls all the items of the stream into an array (with type parameter Any) and returns it.
+ */
+@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+fun Stream<Any>.anyArray(): Array<Any>
+    = (mutableList() as java.util.List<*>).toArray()
+
+/**
  * Folds [reduce] over the items of the stream, from left to right, using [first] as initial
  * item on the left.
  *
@@ -82,8 +89,8 @@ inline fun <T: Any, R> Stream<T>.foldl(first: R, reduce: (R, T) -> R): R {
  *
  * e.g. `Stream(1, 2, 3).foldr(0) { r, t -> r + t }` == `(((0 + 3) + 2) + 1)`
  */
-inline fun <reified T: Any, R> Stream<T>.foldr(last: R, reduce: (R, T) -> R): R
-    = array().reverseStream().foldl(last, reduce)
+inline fun <T: Any, R> Stream<T>.foldr(last: R, reduce: (R, T) -> R): R
+    = list().reverseStream().foldl(last, reduce)
 
 /**
  * Folds [f] over the items of the stream, from left to right.
@@ -213,6 +220,25 @@ fun <T: Any, K, V> Stream<T>.associateMutable(f: (T) -> Pair<K, V>): MutableMap<
 fun <T: Any, K, V> Stream<T>.associate(f: (T) -> Pair<K, V>): Map<K, V>
     = associateMutable(f)
 
+/**
+ * Groups items in the stream by the selector returned by [selector].
+ */
+fun <T: Any, K> Stream<T>.groupBy(selector: (T) -> K): Map<K, List<T>> {
+    val map = mutableMapOf<K, MutableList<T>>()
+    each { map.getOrPut(selector(it)) { mutableListOf() }.add(it) }
+    return map
+}
+
+/**
+ * Groups items in two lists depending on whether [predicate] returns true (first list) or
+ * false (second list) for each item.
+ */
+fun <T: Any> Stream<T>.partition(predicate: (T) -> Boolean): Pair<List<T>, List<T>> {
+    val truthy = mutableListOf<T>()
+    val falsy  = mutableListOf<T>()
+    each { (if (predicate(it)) truthy else falsy).add(it) }
+    return Pair(truthy, falsy)
+}
 
 /**
  * Creates a string from all the items separated using [separator] and using the given [prefix] and
