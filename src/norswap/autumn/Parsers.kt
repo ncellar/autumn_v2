@@ -2,7 +2,6 @@
 package norswap.autumn.parsers
 import norswap.autumn.*
 import norswap.autumn.result.*
-import norswap.violin.maybe.Maybe
 import norswap.violin.stream.*
 import norswap.violin.utils.after
 
@@ -330,8 +329,13 @@ fun Parser.buildLeaf(node: (String) -> Any) =
  * Returns a parser wrapping this parser. If the wrapped parser succeeds, tries to pop an item
  * from the result of [stack], returning an instance of [Maybe] depending on the result.
  */
-fun Parser.maybe(): Parser =
-    build { Maybe(get<Any>(0)) }
+fun Parser.perhaps(): Parser =
+    build { maybe() }
+
+/**
+ * Syntactic sugar for `Optional(this).perhaps()`.
+ */
+fun Parser.maybe() = Optional(this).perhaps()
 
 /**
  * Same as [Optional] but pushes a boolean on the stack depending on whether the parser matched.
