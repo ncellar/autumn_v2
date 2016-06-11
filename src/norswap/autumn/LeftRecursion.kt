@@ -49,7 +49,7 @@ class Seeds: ValueStack<Seed>() {
 class Ref (val ref: String): Parser()
 {
     lateinit var child: Parser
-    override fun toString() = "Ref($ref)"
+    init { name = "Ref($ref)" }
 
     override fun _parse_(ctx: Context): Result {
         // recursive Ref#parse call
