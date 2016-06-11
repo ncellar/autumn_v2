@@ -204,7 +204,7 @@ abstract class Parser (vararg val children: Parser)
         = if (name != null) "$name (${definer()})" else definer()
 
     /**
-     * Prints the parser: either its [name] and class, or its definer and childrens.
+     * Prints the parser: either its [name] and class, or its definer and children.
      */
     final override fun toString()
         = name ?: "${definer()} (${children.joinToString()})"
