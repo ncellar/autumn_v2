@@ -29,13 +29,13 @@ interface InertState<Self: InertState<Self>>: State<Self, InertState.SameState> 
  * The actual state is held in the container [C], which is copied wholesale when snapshotting,
  * diffing, restoring and merging. This works well for states that just comprise a few fixed fields.
  */
-open class CopyState<C: Copyable>(var container: C): State<C, C> {
-    override fun snapshot(): C = container.copycast()
-    override fun restore(snap: C) { container = snap.copycast() }
+open class CopyState<C: Copyable>(var get: C): State<C, C> {
+    override fun snapshot(): C = get.copycast()
+    override fun restore(snap: C) { get = snap.copycast() }
     override fun diff(snap: C) = snap
-    override fun merge(delta: C) { container = delta.copycast() }
+    override fun merge(delta: C) { get = delta.copycast() }
     override fun equiv(pos: Int, snap: C) = this == snap
-    override fun snapshotString(snap: C, ctx: Context) = "$container"
+    override fun snapshotString(snap: C, ctx: Context) = "$get"
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
