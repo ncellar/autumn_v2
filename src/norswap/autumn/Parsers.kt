@@ -312,8 +312,7 @@ fun Parser.beforePrintingState() = Parser(this) { ctx ->
 fun Parser.build(node: StackAccess.(StackAccess) -> Any?) = Parser(this) { ctx ->
     val stack = StackAccess(ctx.stack)
     this@build.parse(ctx)
-        .ifSuccess { stack.node(stack) ?. let { stack.push(it) } }
-        .after { stack.commit() }
+        .ifSuccess { stack.prepareAccess() ; stack.node(stack) ?. let { stack.push(it) } }
 }
 
 /**
