@@ -217,8 +217,10 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
         }
         else if (result is Error)
             b += result
+        else if (pos == text.length - 1)
+            b += "Success (full match)"
         else
-            b += "Success up to $posStr"
+            b += "Success up to $posStr (EOF at ${posToString(text.length - 1)})"
         return b.toString()
     }
 }
