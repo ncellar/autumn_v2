@@ -17,8 +17,7 @@ import kotlin.reflect.jvm.javaType
  * and use the other names as referable aliases.
  * (This is enacted by the call to `READY()`).
  *
- * The [state] parameter must contain constructor for the states that are required to correctly
- * parse the grammar.
+ * Don't forget to override [requiredStates] if required.
  *
  * # Tokenization
  *
@@ -35,7 +34,7 @@ import kotlin.reflect.jvm.javaType
  *
  * You can enable caching for tokens by passing a [TokenCache] to the [Context].
  */
-abstract class Grammar(vararg val states: () -> State<*, *>)
+abstract class Grammar
 {
     /// SETTINGS ///////////////////////////////////////////////////////////////////////////////////
 
@@ -65,6 +64,11 @@ abstract class Grammar(vararg val states: () -> State<*, *>)
      * token type.
      */
     open val tokenDisambiguation = ORDERING;
+
+    /**
+     * Override this function to indicate which states are required to parse the grammar correctly.
+     */
+    open fun requiredStates(): List<State<*,*>> = emptyList()
 
     /**
      * The root parser for this grammar. Used by [parse].
@@ -213,7 +217,7 @@ abstract class Grammar(vararg val states: () -> State<*, *>)
      * this grammar's required [states] as well as [moreStates].
      */
     fun parse(text: String, vararg moreStates: State<*, *>): Result
-        = Context(text, *(states.map { it() }.toTypedArray() + moreStates)).parse(root)
+        = Context(text, *(requiredStates().toTypedArray() + moreStates)).parse(root)
 
     /**
      * Syntactic sugar for `Seq(buildLeaf(node), whitespace)` ([buildLeaf]).
