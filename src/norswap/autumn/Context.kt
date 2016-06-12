@@ -45,7 +45,7 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
     val lineMap by lazy { LineMap(text) }
 
     /**
-     * This controls how positions are reported in diagnostic and error messages.
+     * This controls how positions are reported in diagnostic and failure messages.
      * Change this function if you want to use some other positioning scheme than (line, column),
      * in which case you should also change [rangeToString].
      */
@@ -53,7 +53,7 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
 
     /**
      * This controls how input ranges (i.e. two input positions, first one inclusive, second one
-     * exclusive) are reported in diagnostic and error messages. Change this function if you want
+     * exclusive) are reported in diagnostic and failure messages. Change this function if you want
      * to use some other positioning scheme than (line, column),
      * in which case you should also change [posToString].
      */
@@ -65,7 +65,7 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
     val posStr: String /**/ get() = posToString(pos)
 
     /**
-     * If debug mode is active, [error] will generate instances of [DebugError], which
+     * If debug mode is active, [Parser.failure] will generate instances of [DebugFailure], which
      * include a lot more diagnostic information, at the cost of performance. Default: false
      */
     var debug = false
@@ -114,16 +114,16 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
     /**
      * This is how you start a parse!
      *
-     * If the parser throws an exception it will be caught and encapsulated in a [DebugError]
-     * that will be returned. For panics, the error is simply returned as such.
+     * If the parser throws an exception it will be caught and encapsulated in a [DebugFailure]
+     * that will be returned. For panics, the failure is simply returned as such.
      */
     fun parse(p: Parser): Result {
         try {
             return p.parse(this)
         } catch (e: Carrier) {
-            return e.error
+            return e.failure
         } catch (e: Exception) {
-            return DebugError(pos, { "exception thrown by parser" }, e, trace.link, snapshot())
+            return DebugFailure(pos, { "exception thrown by parser" }, e, trace.link, snapshot())
         }
     }
 
@@ -140,7 +140,7 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
      */
     @Suppress("UNCHECKED_CAST")
     fun <T: State<*,*>> state(klass: Class<T>): T =
-        state_(klass) ?: throw java.lang.Error("Unknown state type: '${klass.canonicalName}'")
+        state_(klass) ?: throw Error("Unknown state type: '${klass.canonicalName}'")
 
     /**
      * Retrieve the state instance of the class given by the type parameter or by [klass], if any,
@@ -197,14 +197,14 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
     /**
      * Returns a complete diagnostic of the result.
      *
-     * This will include the reached input position in case of success, and the error message in case
-     * of error. If the result is a [DebugError], a parse trace ([DebugError.trace]) will be
-     * printed, along with either the exception or error message, and the state at the time of the
-     * error.
+     * This will include the reached input position in case of success, and the message in case
+     * of failure. If the result is a [DebugFailure], a parse trace ([DebugFailure.trace]) will be
+     * printed, along with either the exception or failure message, and the state at the time of
+     * failure.
      */
     fun diagnostic(result: Result): String {
         val b = StringBuilder()
-        if (result is DebugError) {
+        if (result is DebugFailure) {
             b += result.trace()
             b += "\n"
             if (result.throwable !is StackTrace)
@@ -214,7 +214,7 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
             b += "\n"
             b += result.snapshot.toString(this)
         }
-        else if (result is Error)
+        else if (result is Failure)
             b += result
         else if (pos == text.length - 1)
             b += "Success (full match)"

@@ -56,7 +56,7 @@ fun Choice (vararg children: Parser) = Parser(*children) { ctx ->
         .map { it.parse(ctx) }
         .upThrough { it is Success }
         .maxWith(Furthest)
-        ?: ctx.error { "empty choice: ${toStringSimple()}" }
+        ?: ctx.failure { "empty choice: ${toStringSimple()}" }
 }
 
 /**
@@ -66,23 +66,23 @@ fun Longest (vararg children: Parser) = Parser(*children) body@ { ctx ->
     val initial = ctx.snapshot()
     var bestSnapshot = initial
     var bestPos = -1
-    var furthestError: Error? = null
+    var furthestFailure: Failure? = null
     for (child in children) {
         val result = child.parse(ctx)
         if (ctx.pos > bestPos) {
             bestPos = ctx.pos
             bestSnapshot = ctx.snapshot()
         }
-        if (result !is Error)
+        if (result !is Failure)
             ctx.restore(initial)
         else if (bestPos == -1)
-            furthestError = Furthest.max(furthestError ?: result, result)
+            furthestFailure = Furthest.max(furthestFailure ?: result, result)
     }
 
     if (bestPos > -1) {
         ctx.restore(bestSnapshot) ; Success
-    } else if (furthestError != null) furthestError
-    else ctx.error { "empty longest-match choice: ${toStringSimple()}" }
+    } else if (furthestFailure != null) furthestFailure
+    else ctx.failure { "empty longest-match choice: ${toStringSimple()}" }
 }
 
 /// Lookahead //////////////////////////////////////////////////////////////////////////////////////
@@ -102,7 +102,7 @@ fun Not (child: Parser) = Parser(child) { ctx ->
     val result = child.parse(ctx)
     if (result is Success) {
         ctx.restore(snapshot)
-        ctx.error { child.toStringSimple() + " succeeded" }
+        ctx.failure { child.toStringSimple() + " succeeded" }
     } else Success
 }
 
@@ -115,7 +115,7 @@ fun Seq (vararg children: Parser) = Parser(*children) { ctx ->
     val snapshot = ctx.snapshot()
     children.stream()
         .map { it.parse(ctx) }
-        .first { it is Error }
+        .first { it is Failure }
         ?.apply { ctx.restore(snapshot) }
         ?: Success
 }
@@ -165,14 +165,14 @@ class Until (
     override fun _parse_(ctx: Context): Result {
         val initial = ctx.snapshot()
         var snapshot = initial
-        var err: Error
+        var err: Failure
         var cnt = 0
         while (true) {
             var res = until.parse(ctx)
             if (res is Success) break
-            err = res as Error
+            err = res as Failure
             res = repeat.parse(ctx)
-            if (res is Error) {
+            if (res is Failure) {
                 ctx.restore(initial)
                 return Furthest.max(err, res)
             }
@@ -181,7 +181,7 @@ class Until (
         }
         if (matchSome && cnt == 0) {
             ctx.restore(initial)
-            return ctx.error { "UntilSome did not match any repeatable item" }
+            return ctx.failure { "UntilSome did not match any repeatable item" }
         }
         ctx.restore(snapshot)
         return Success
@@ -198,7 +198,7 @@ fun NTimes (n: Int, child: Parser) = Parser(child) body@ { ctx ->
     val snapshot = ctx.snapshot()
     for (i in 1..n) {
         val result = child.parse(ctx)
-        if (result is Error) {
+        if (result is Failure) {
             ctx.restore(snapshot)
             return@body result
         }
@@ -218,7 +218,7 @@ fun Separated (item: Parser, sep: Parser) = Parser(item, sep) { ctx ->
     }
 }
 
-/// Error Handling /////////////////////////////////////////////////////////////////////////////////
+/// Failure Handling ///////////////////////////////////////////////////////////////////////////////
 
 /**
  * Always succeeds matching nothing.
@@ -230,59 +230,59 @@ fun Successful()
  * Always fails.
  */
 fun Failing()
-    = Parser { it.error() }
+    = Parser { it.failure() }
 
 /**
- * Always fails, using [e] to construct the returned error.
+ * Always fails, using [e] to construct the returned failure.
  */
-fun Raise (e: Parser.(Context) -> Error)
+fun Raise (e: Parser.(Context) -> Failure)
     = Parser { e(it) }
 
 /**
- * Always fails, using [msg] to construct the message of the returned error.
+ * Always fails, using [msg] to construct the message of the returned failure.
  */
 fun RaiseMsg (msg: Parser.(Context) -> String)
-    = Raise { it.error(msg = msg)  }
+    = Raise { it.failure(msg = msg)  }
 
 /**
- * Throws a panic, using [e] to construct the thrown error.
+ * Throws a panic, using [e] to construct the thrown failure.
  */
-fun Panic (e: Parser.(Context) -> Error)
+fun Panic (e: Parser.(Context) -> Failure)
     = Parser { panic(e(it)) }
 
 /**
- * Throws a panic, using [msg] to construct the message of the thrown error.
+ * Throws a panic, using [msg] to construct the message of the thrown failure.
  */
 fun PanicMsg (msg: Parser.(Context) -> String)
-    = Panic { it.error(msg = msg)  }
+    = Panic { it.failure(msg = msg)  }
 
 /**
- * Matches [child], else throws the error it returned.
+ * Matches [child], else throws the failure it returned.
  */
 fun Paranoid (child: Parser) = Parser(child) { ctx ->
     ctx.parse(child)
-        .ifError { panic(it) }
+        .ifFailure { panic(it) }
 }
 
 /**
- * Matches [child], else fails. If [child] throws an error that matches [pred] (matches
+ * Matches [child], else fails. If [child] throws a failure that matches [pred] (matches
  * everything by default), returns it instead.
  */
-fun Chill (child: Parser, pred: (Error) -> Boolean = { true }) = Parser(child) { ctx ->
+fun Chill (child: Parser, pred: (Failure) -> Boolean = { true }) = Parser(child) { ctx ->
     tryParse(pred) { child.parse(ctx) }
 }
 
 /**
- * Matches this parser, else raises the error returned by [e].
+ * Matches this parser, else raises the failure returned by [e].
  */
-infix fun Parser.orRaise(e: Parser.(Context) -> Error) = Parser(this) { ctx ->
+infix fun Parser.orRaise(e: Parser.(Context) -> Failure) = Parser(this) { ctx ->
     ctx.parse(this@orRaise).or { e(ctx) }
 }
 
 /**
- * Matches this parser, else raises an error with the message returned by [msg].
+ * Matches this parser, else raises a failure with the message returned by [msg].
  */
-infix fun Parser.orRaiseMsg(msg: Parser.(Context) -> String) = this.orRaise { it.error(msg = msg) }
+infix fun Parser.orRaiseMsg(msg: Parser.(Context) -> String) = this.orRaise { it.failure(msg = msg) }
 
 /**
  * Returns a parser that matches the same as the parser it is called on, but logs
@@ -363,16 +363,17 @@ fun Perform(f: Context.() -> Unit)
     = Parser { it.f() ; Success }
 
 /**
- * Succeeds if [pred] holds, or fails with the error generated by [err] (by default: `ctx.error()`).
+ * Succeeds if [pred] holds, or fails with the failure generated by [fail]
+ * (by default: [Parser.failure]).
  */
-fun Predicate(err: Parser.(Context) -> Error = { it.error() }, pred: Context.() -> Boolean)
-    = Parser { ctx -> if (ctx.pred()) Success else err(ctx) }
+fun Predicate(fail: Parser.(Context) -> Failure = { it.failure() }, pred: Context.() -> Boolean)
+    = Parser { ctx -> if (ctx.pred()) Success else fail(ctx) }
 
 /**
- * Succeeds if [pred] holds, or fails with an error using the message generated by [msg].
+ * Succeeds if [pred] holds, or fails with a failure using the message generated by [msg].
  */
 fun PredicateMsg(pred: Context.() -> Boolean, msg: Parser.(Context) -> String)
-    = Parser { ctx -> if (ctx.pred()) Success else ctx.error(msg) }
+    = Parser { ctx -> if (ctx.pred()) Success else ctx.failure(msg) }
 
 /**
  * Returns a parser that wraps this parser, executing it then, if successful, returning the result

@@ -54,7 +54,7 @@ class StackAccess(val stack: Stack<Any>)
 
     /**
      * Retrieve the item at the specified index.
-     * @throws Error if the required position doesn't exist
+     * @throws Failure if the required position doesn't exist
      */
     fun <T: Any> next(i: Int = cur++): T = items.getOrNull(i) as T?
         ?: throw Error("No items at index $i (only ${items.size} items available)")

@@ -5,7 +5,7 @@ import norswap.violin.stream.*
 /**
  * The correct implementation of this interface, coupled with the correct use of the corresponding
  * operations in [Context], ensures that the state changes made by failed parser invocations
- * (whenever [Parser.invoke] returns [Error]) are discarded and not visible to subsequent parser
+ * (whenever [Parser.invoke] returns [Failure]) are discarded and not visible to subsequent parser
  * invocations. This makes state straightforward to use with PEG parsing.
  *
  * Each implementation of this interface represents some state that some parsers need to manipulate.
