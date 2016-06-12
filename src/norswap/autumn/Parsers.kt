@@ -229,7 +229,7 @@ fun Successful()
 /**
  * Always fails.
  */
-fun Failure()
+fun Failing()
     = Parser { it.error() }
 
 /**
