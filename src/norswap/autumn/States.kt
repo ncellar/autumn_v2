@@ -4,6 +4,8 @@ import norswap.violin.Copyable
 import norswap.violin.stream.*
 import norswap.violin.link.*
 import norswap.violin.Stack
+import norswap.violin.utils.plusAssign
+import java.util.HashMap
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -96,6 +98,27 @@ open class BottomUpStack<T: Any>(private var stack: LinkList<T> = LinkList())
 
     override fun equiv(pos: Int, snap: LinkList<T>) = true
     override fun snapshotString(snap: LinkList<T>, ctx: Context) = "$snap"
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+open class MapState<K: Any, V: Any>(private var map: MutableMap<K, V> = HashMap())
+: State<Map<K, V>, Map<K, V>>, Map<K, V> by map
+{
+    override fun snapshot() = HashMap(map)
+    override fun restore(snap: Map<K, V>) { map = HashMap(map) }
+    override fun diff(snap: Map<K, V>) = HashMap(map)
+    override fun merge(delta: Map<K, V>) { map = HashMap(map) }
+    override fun equiv(pos: Int, snap: Map<K, V>) = map == snap
+    override fun snapshotString(snap: Map<K, V>, ctx: Context): String {
+        val b = StringBuilder()
+        b += "{"
+        for (e in map.entries)
+            b += "\n    ${e.key} = ${e.value}"
+        if (!map.isEmpty()) b += "\n"
+        b += "}"
+        return b.toString()
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
