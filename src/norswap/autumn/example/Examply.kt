@@ -4,6 +4,7 @@ import norswap.autumn.*
 import norswap.autumn.parsers.*
 import norswap.violin.stream.any
 import norswap.violin.utils.after
+import java.util.HashMap
 
 object examply: Grammar()
 {
@@ -39,6 +40,19 @@ object examply: Grammar()
     }
 
     val newline = Predicate { indent.end == pos }
+
+    val buildIndentMap = Parser { ctx ->
+        val map = HashMap<Int, IndentEntry>()
+        var pos = 0
+        ctx.text.split('\n').forEachIndexed { i, str ->
+            val wspace = str.takeWhile { it == ' ' || it == '\t' }
+            val count = wspace.sumBy { if (it == ' ') 1 else 4 }
+            map.put(i, IndentEntry(count, pos + wspace.length))
+            pos += str.length + 1
+        }
+        ctx.state(IndentMap::class).map = map
+        Success
+    }
 
     /// TYPES //////////////////////////////////////////////////////////////////////////////////////
 
@@ -195,7 +209,10 @@ object examply: Grammar()
     val import = Seq(+"import", qualIden)
         .build { Import(it()) }
 
-    override val root = Seq(ZeroMore(import).collect<Import>(), ZeroMore(`class`).collect<Class>())
+    override val root = Seq(
+            buildIndentMap,
+            ZeroMore(import).collect<Import>(),
+            ZeroMore(`class`).collect<Class>())
         .build { File(it(), it()) }
 
     override val status = READY()
