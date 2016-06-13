@@ -6,13 +6,15 @@ package norswap.autumn
  */
 class LineMap (string: String, val lineOffset: Int = 1, val columnOffset: Int = 1)
 {
-    private val linePositions: IntArray
+    /**
+     * An array such that `linePosition[i]` returns the index of the first character on line `i`.
+     */
+    val linePositions: IntArray
 
     init {
         val positions = mutableListOf(0)
         string.forEachIndexed { i, c -> if (c == '\n') positions.add(i + 1) }
-        linePositions = IntArray(positions.size)
-        positions.forEachIndexed { i, pos -> linePositions[i] = pos }
+        linePositions = positions.toIntArray()
     }
 
     /**
