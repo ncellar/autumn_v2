@@ -26,7 +26,7 @@ class Seeds: ValueStack<Seed>() {
      */
     override fun equiv(pos: Int, snap: LinkList<Seed>)
         = snap.stream().takeWhile { it.pos >= pos }.set() ==
-          stream().takeWhile { it.pos >= pos }.set()
+               stream().takeWhile { it.pos >= pos }.set()
 
     fun get(pos: Int, parser: Parser): Seed?
         = stream()  .takeWhile { it.pos >= pos }
