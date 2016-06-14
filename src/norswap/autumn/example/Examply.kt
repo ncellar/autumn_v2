@@ -20,6 +20,19 @@ object examply: Grammar()
             map[ctx.lineMap.lineFromOffset(ctx.pos)]!!
     }
 
+    val buildIndentMap = Parser { ctx ->
+        val map = HashMap<Int, IndentEntry>()
+        var pos = 0
+        ctx.text.split('\n').forEachIndexed { i, str ->
+            val wspace = str.takeWhile { it == ' ' || it == '\t' }
+            val count = wspace.expandTabs(4).length
+            map.put(i, IndentEntry(count, pos + wspace.length))
+            pos += str.length + 1
+        }
+        ctx.state(IndentMap::class).map = map
+        Success
+    }
+
     class IndentStack: ValueStack<Int>()
 
     val Context.indent: IndentEntry /**/ get() = state(IndentMap::class).get(this)
@@ -40,19 +53,6 @@ object examply: Grammar()
     }
 
     val newline = Predicate { indent.end == pos }
-
-    val buildIndentMap = Parser { ctx ->
-        val map = HashMap<Int, IndentEntry>()
-        var pos = 0
-        ctx.text.split('\n').forEachIndexed { i, str ->
-            val wspace = str.takeWhile { it == ' ' || it == '\t' }
-            val count = wspace.sumBy { if (it == ' ') 1 else 4 }
-            map.put(i, IndentEntry(count, pos + wspace.length))
-            pos += str.length + 1
-        }
-        ctx.state(IndentMap::class).map = map
-        Success
-    }
 
     /// TYPES //////////////////////////////////////////////////////////////////////////////////////
 
