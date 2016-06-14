@@ -210,6 +210,7 @@ object examply: Grammar()
         .build { Import(it()) }
 
     override val root = Seq(
+            whitespace,
             buildIndentMap,
             ZeroMore(import).collect<Import>(),
             ZeroMore(`class`).collect<Class>())
