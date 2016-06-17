@@ -1,6 +1,22 @@
-package norswap.autumn
-import norswap.autumn.TokenGrammar.TokenDisambiguation.*
+package norswap.autumn.extensions
+import norswap.autumn.*
 import norswap.autumn.parsers.*
+import norswap.violin.utils.plusAssign
+import norswap.violin.stream.*
+import norswap.autumn.extensions.TokenGrammar.TokenDisambiguation.*
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Holds a type identifier for the token, its location within the input, as well as its derived
+ * value (as determined by [Grammar.token]).
+ */
+data class Token<T: Any> (val type: Int, val start: Int, val end: Int, val value: T) {
+    fun toString(ctx: Context)
+        = "Token<${value.javaClass.simpleName}> (${ctx.rangeToString(start, end)}): $value"
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Adds lexical analysis (tokenization) emulation to [Grammar].
@@ -69,7 +85,7 @@ abstract class TokenGrammar: Grammar()
         tokenParser = when(tokenDisambiguation) {
             ORDERING -> Choice  (*array).orRaiseMsg { msg }
             LONGEST_MATCH -> Longest (*array).orRaiseMsg { msg }
-    }   }
+        }   }
 
     /**
      * Returns a parser for a token whose syntax is defined by this parser and whose value
@@ -86,7 +102,8 @@ abstract class TokenGrammar: Grammar()
                 ctx.stack.push(
                     Token(type, pos, ctx.pos, value(ctx.text.substring(pos, ctx.pos))))
                 whitespace.parse(ctx)
-        }   })
+            }
+        })
 
         /**
          * Returns the requested parser, which will match the next token (using the [TokenCache]
@@ -105,5 +122,41 @@ abstract class TokenGrammar: Grammar()
             val token = ctx.stack.peek() as Token<*>?
             cache?.put(pos, TokenCacheEntry(result, ctx.pos, token))
             return@body succeed(ctx) { token?.type == type }
+        }
     }   }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+data class TokenCacheEntry(
+    val result: Result,
+    val end: Int,
+    val token: Token<*>?)
+
+/**
+ * Memoizes matched tokens by input position.
+ * This is optional and must be added to the [Context] to be used.
+ */
+class TokenCache(val map: MutableMap<Int, TokenCacheEntry> = mutableMapOf())
+: InertState<TokenCache>, MutableMap<Int, TokenCacheEntry> by map
+{
+    override fun snapshotString(snap: TokenCache, ctx: Context): String {
+        val b = StringBuilder()
+        b += "{"
+        map.entries
+            .stream().array()
+            .apply { sortBy { it.key } }
+            .stream()
+            .each {
+                val (k, v) = it
+                if (v.result is Success)
+                    b += "\n  from ${ctx.rangeToString(k, v.end)}: ${v.token.toString()}"
+                else
+                    b += "\n  at ${ctx.posToString(k)}: ${v.result.toString()}"
+            }
+        if (!map.isEmpty()) b += "\n"
+        b += "}"
+        return b.toString()
+    }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
