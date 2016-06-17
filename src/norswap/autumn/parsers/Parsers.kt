@@ -453,4 +453,19 @@ fun Predicate (fail: Parser.(Context) -> Failure = { failure(it) }, pred: Contex
 fun PredicateMsg (msg: Parser.(Context) -> String, pred: Context.() -> Boolean)
     = Parser { ctx -> if (ctx.pred()) Success else failure(ctx) { msg(ctx) } }
 
+/**
+ * Invokes [around] with a new context whose input is the text matched by [source].
+ * The new context does not share state with the current context.
+ */
+fun Bounded (source: Parser, around: Parser) =
+    WithMatchString(source) { ctx, str -> Context(str).parse(around) } withDefiner "Bounded"
+
+/**
+ * Invokes [f] with a new context whose input is the text matched by [source].
+ * The new context does not share state with the current context, but [f] may access the old context
+ * through lambda capture.
+ */
+fun Bounded (child: Parser, f: Parser.(Context) -> Result)
+    = WithMatchString(child) { ctx, str -> Context(str).parse(Parser(body = f)) } withDefiner "Bounded"
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -114,4 +114,18 @@ infix fun Parser.doWithMatchStart(f: Parser.(Context, Int) -> Unit)
 infix fun Parser.doWithMatchString(f: Parser.(Context, String) -> Unit)
     = DoWithMatchString(this, f)
 
+/// Misc ///////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * [Bounded]`(this, source)`
+ */
+infix fun Parser.over(source: Parser)
+    = Bounded(this, source)
+
+/**
+ * [Bounded]`(this, f)`
+ */
+infix fun Parser.over(f: Parser.(Context) -> Result)
+    = Bounded(this, f)
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
