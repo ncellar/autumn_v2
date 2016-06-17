@@ -18,7 +18,7 @@ import norswap.violin.utils.after
  * or override the [_parse_] method:
  *
  * ```
- * fun Seq (vararg children: Parser) = object: Parser(*children) {
+ * fun MyParser (vararg children: Parser) = object: Parser(*children) {
  *     override fun _parse_(ctx: Context): Result {
  *          ...
  *          return Success
@@ -38,7 +38,7 @@ import norswap.violin.utils.after
  *
  * # Contract
  *
- * Either [parse] succeeds returning [Success] or fails returning an [Failure], in which case it must
+ * Either [parse] succeeds returning [Success] or fails returning a [Failure], in which case it must
  * revert all changes it and its descendants made to the state. This can be achieved using
  * [Context.snapshot] and [Context.restore] or the [transact] shorthand.
  *
