@@ -34,14 +34,14 @@ val Parser.beforePrintingState: Parser
 /**
  * See [WithStack].
  */
-infix fun Parser.withStack(node: StackAccess.() -> Result)
-    = WithStack(this, node)
+fun Parser.withStack(pop: Boolean = true, node: StackAccess.() -> Result)
+    = WithStack(this, pop, node)
 
 /**
  * See [DoWithStack].
  */
-infix fun Parser.doWithStack(node: StackAccess.() -> Unit)
-    = DoWithStack(this, node)
+fun Parser.doWithStack(pop: Boolean = true, node: StackAccess.() -> Unit)
+    = DoWithStack(this, pop, node)
 
 /**
  * See [Build].
