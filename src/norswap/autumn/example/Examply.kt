@@ -1,4 +1,4 @@
-@file:Suppress("USELESS_ELVIS") // IDEA being bogus
+@file:Suppress("USELESS_ELVIS", "UNUSED_VARIABLE") // IDEA being bogus
 package norswap.autumn.example
 import norswap.autumn.*
 import norswap.autumn.parsers.*
@@ -42,17 +42,34 @@ object examply: Grammar()
         val new = ctx.indent.count
         val old = ctx.istack.peek() ?: 0
         if (new > old) Success after { ctx.istack.push(new) }
-        else ctx.failure { "Expecting indentation > $old positions (found: $new positions)" }
+        else failure(ctx) { "Expecting indentation > $old positions (found: $new positions)" }
     }
 
     val dedent = Parser { ctx ->
         val new = ctx.indent.count
         val old = ctx.istack.peek() ?: 0
         if (new <= old) Success after { ctx.istack.pop() }
-        else ctx.failure { "Expecting indentation < $old positions (found: $new positions)" }
+        else failure(ctx) { "Expecting indentation < $old positions (found: $new positions)" }
     }
 
     val newline = Predicate { indent.end == pos }
+
+    /// "LEXICAL" //////////////////////////////////////////////////////////////////////////////////
+
+    val idenChar    = CharPred(Char::isJavaIdentifierPart)
+    val idenStart   = CharPred(Char::isJavaIdentifierStart)
+    val digit       = CharPred(Char::isDigit)
+
+    val iden = Seq(idenStart, idenChar.repeat)
+        .leaf { it }
+
+    val int = digit.repeat1
+        .leaf { it.toInt() }
+
+    val `"` = "\""
+
+    val string = Seq(+`"`, any.repeat, +`"`)
+        .leaf { it.removeSurrounding(`"`, `"`) }
 
     /// TYPES //////////////////////////////////////////////////////////////////////////////////////
 
@@ -65,11 +82,9 @@ object examply: Grammar()
     class ScopeStack: ValueStack<Scope>()
     val Context.scopes: ScopeStack /**/ get() = state(ScopeStack::class)
 
+    // TODO
+    @Suppress("unused", "UNUSED_PARAMETER")
     fun <K, V> Map<K, V>.put(k: K, v: V): Map<K, V> = TODO()
-
-    // TODO DefClass and DefFunc in the proper locations
-    // TODO import and alias
-    // TODO "classGuard"
 
     fun Context.scope(name: String?): Scope?
         =   if (name == null) null
@@ -81,24 +96,23 @@ object examply: Grammar()
                 ?.filterMap { it.map[name] }
                 ?.next()
 
-    fun Context.register(name: String, scope: Scope = Scope(name, null, false, emptyMap())) {
-        val old = scopes.pop()!!
-        scopes.push(old.copy(map = old.map.put(name, scope)))
+    fun Context.register(name: String, scope: Scope? = Scope(name, null, false, emptyMap())) {
+        if (scope != null) {
+            val old = scopes.pop()!!
+            scopes.push(old.copy(map = old.map.put(name, scope)))
+        }
     }
 
-    fun DefClass (sig: Parser, body: Parser) = Seq(
-        sig.withStack {
+    fun DefClass(sig: Parser, body: Parser) = Seq(
+        sig.withStack(false) {
             val name: String = get()
             val parent: SimpleType? = maybe()
             ctx.register(name)
             val parentScope = ctx.scope(parent?.name)
             if (parentScope != null && !parentScope.closed)
-                // TODO bat-shit ugly
-                parser.apply { ctx.failure { "A class can't inherit one of its outer classes" } }
+                parser.failure(ctx) { "A class can't inherit one of its outer classes" }
             ctx.scopes.push(Scope(name, parentScope))
-            // TODO stackaccess should have "re-push" or "no depush"
-            if (parent != null) stack.push(parent)
-            stack.push(name)
+            Success
         },
         body,
         DoWithContext {
@@ -111,35 +125,33 @@ object examply: Grammar()
         body,
         DoWithContext { scopes.pop() })
 
-    val classGuard = Predicate { true } // TODO
+    fun Import(import: Parser)
+        = import.doWithStack(false) { ctx.register(get<Import>().components.last()) }
 
-    /// "LEXICAL" //////////////////////////////////////////////////////////////////////////////////
+    fun Alias(alias: Parser)
+        = alias.doWithStack(false) {
+            val a = get<Alias>()
+            val defined = a.defined.name
+            if (a.aliased is SimpleType)
+                ctx.register(defined, ctx.scope(a.aliased.name))
+            else
+                ctx.register(defined, Scope(defined, null, true))
+        }
 
-    val idenChar    = CharPred(Char::isJavaIdentifierPart)
-    val idenStart   = CharPred(Char::isJavaIdentifierStart)
-    val digit       = CharPred(Char::isDigit)
-
-    val iden = Seq(idenStart, ZeroMore(idenChar))
-        .leaf { it }
-
-    val int = OneMore(digit)
-        .leaf { it.toInt() }
-
-    val string = Seq(+"\"", ZeroMore(AnyChar()), +"\"")
-        .leaf { it.removeSurrounding("\"", "\"") }
+    val classGuard = iden.withStack { parser.succeed(ctx) { ctx.scope(get()) != null } }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     val identifier = iden
         .build { Identifier(get()) }
 
-    val qualIden = Separated(iden, +".")
-        .build { QualifiedIdentifier(rest()) }
+    val qualIden = (iden around1 +".")
+        .collect<String>()
 
     val simpleType = iden
         .build { SimpleType(get()) }
 
-    val funTypeParams = Optional(Separated(!"type", +","))
+    val funTypeParams = (!"type" around +",")
         .collect<Type>()
 
     val funType = Seq(+"(", funTypeParams, +")", +"->", !"type")
@@ -147,27 +159,26 @@ object examply: Grammar()
 
     val type = Choice(simpleType, funType)
 
-    val typedIden = Seq(iden, Seq(+":", type).buildOptional)
+    val typedIden = Seq(iden, Seq(+":", type).buildOpt)
         .build { TypedIdentifier(get(), maybe()) }
 
-    val paramDecls = Optional(Separated(typedIden, +","))
+    val paramDecls = (typedIden around +",")
         .collect<TypedIdentifier>()
 
     val lambdaParams = Seq(paramDecls, +"->")
 
-    val paramList = Seq(+"(", Optional(Separated(!"expr", +",")) , +")")
+    val paramList = Seq(+"(", !"expr" around +",", +")")
         .collect<Expr>()
 
-    val statements = Seq(indent, Until(!"statement", dedent))
+    val statements = Seq(indent, Scoped(!"statement" until dedent))
         .collect<Stmt>()
 
-    val decls = Seq(indent, Until(!"decl", dedent))
+    val decls = Seq(indent, !"decl" until dedent)
         .build { rest<Decl>() }
 
     val funCall = Seq(iden, paramList)
         .build { FunCall(get(), get()) }
 
-    // TODO classguard
     val ctorCall = Seq(simpleType, paramList)
         .build { CtorCall(get(), get(), null) }
 
@@ -188,7 +199,7 @@ object examply: Grammar()
 
     val parenExpr = Seq(+"(", !"expr", +")")
 
-    val lambda = Seq(+"{", lambdaParams.buildOptional, !"expr", +"}")
+    val lambda = Seq(+"{", lambdaParams.buildOpt, !"expr", +"}")
         .build { Lambda(maybe() ?: emptyList(), listOf(Return(get()))) }
 
     val thisCall = Seq(+"this", paramList)
@@ -200,9 +211,11 @@ object examply: Grammar()
     val superCall = Seq(+"super", paramList)
         .build { SuperCall(get()) }
 
-    var expr = Choice(
+    val call = Choice(Seq(classGuard, ctorCall), funCall)
+
+    val expr = Choice(
         methodCall, fieldAccess, sum, diff, assign, parenExpr, lambda, thisCall,
-        `this`, superCall, funCall, ctorCall, identifier, string, int)
+        `this`, superCall, call, identifier, string, int)
 
     val `if` = Seq(+"if", expr, statements)
         .build { If(get(), get()) }
@@ -222,22 +235,32 @@ object examply: Grammar()
     val skip = Seq(+"skip", newline)
         .build { Skip }
 
-    val blockFunCall = Seq(identifier, paramList, +":", lambdaParams.buildOptional, statements)
-        .build { FunCall(get(), get<List<Expr>>() + Lambda(maybe() ?: emptyList(), get())) }
+    val blockFunCall = Seq(funCall, +":", lambdaParams.buildOpt, statements)
+        .build {
+            val call = get<FunCall>()
+            val lambda = Lambda(maybe() ?: emptyList(), get())
+            call.copy(params = call.params + lambda)
+        }
 
-    val blockCtor = Seq(simpleType, classGuard, paramList, +":", decls)
+    val blockMethodCall = Seq(expr, +".", blockFunCall)
+        .build { MethodCall(get(), get()) }
+
+    val blockCtor = Seq(simpleType, classGuard, paramList, +":", Scoped(decls))
         .build { CtorCall(get(), get(), get()) }
 
-    val blockCall = Choice(blockCtor, blockFunCall)
+    val blockCall = Choice(Seq(classGuard, blockCtor), blockMethodCall, blockFunCall)
 
-    val `val` = Seq(+"val", typedIden, Seq(+"=", Choice(blockCall, expr)).buildOptional, newline)
+    val `val` = Seq(+"val", typedIden, Seq(+"=", Choice(blockCall, expr)).buildOpt, newline)
         .build { Val(get(), maybe()) }
 
-    val `var` = Seq(+"var", typedIden, Seq(+"=", Choice(blockCall, expr)).buildOptional, newline)
+    val `var` = Seq(+"var", typedIden, Seq(+"=", Choice(blockCall, expr)).buildOpt, newline)
         .build { Var(get(), maybe()) }
 
-    val `class` = DefClass(Seq(+"class", iden, Seq(+":", simpleType).buildOptional), decls)
+    val `class` = DefClass(Seq(+"class", iden, Seq(+":", simpleType).buildOpt), decls)
         .build { Class(get(), maybe(), get()) }
+
+    val alias = Seq(+"alias", simpleType, +"=", type)
+        .build { Alias(get(), get()) }
 
     val `fun` = Seq(
             (+"static").asBool, +"fun", iden, +"(", paramDecls, +")",
@@ -250,19 +273,20 @@ object examply: Grammar()
     val blockAssign = Seq(identifier, +"=", blockCall)
         .build { Assign(get(), get()) }
 
-    val decl = Choice(`val`, `var`, `class`, `fun`)
+    val decl = Choice(`val`, `var`, `fun`, alias, `class`)
 
     val statement = Choice(
-        `if`, `while`, `break`, `continue`, skip, blockAssign, decl, blockCall,  Seq(expr, newline))
+        `if`, `while`, `break`, `continue`, `return`, skip,
+        blockAssign, decl, blockCall,  Seq(expr, newline))
 
-    val import = Seq(+"import", qualIden)
+    val import = Import(Seq(+"import", qualIden))
         .build { Import(get()) }
 
-    override val root = Seq(
+    override val root = Scoped(Seq(
             whitespace,
             buildIndentMap,
             ZeroMore(import).collect<Import>(),
-            ZeroMore(`class`).collect<Class>())
+            ZeroMore(`class`).collect<Class>()))
         .build { File(get(), get()) }
 
     override val status = READY()
@@ -297,8 +321,7 @@ data class IntegerLit (val value: Int): Expr
 data class SimpleType (val name: String): Type
 data class FunType (val params: List<Type>, val returnType: Type): Type
 
-// Helpers
-data class QualifiedIdentifier (val components: List<String>): Expr
+// Helper
 data class TypedIdentifier(val iden: String, val type: Type?): Node
 
 // Statements & Declarations
@@ -317,9 +340,10 @@ data class Fun (
     val returnType: Type,
     val body: List<Stmt>
 ): Stmt, Decl
+data class Alias (val defined: SimpleType, val aliased: Type): Decl
 data class Constructor (val params: List<TypedIdentifier>, val body: List<Stmt>): Decl
 data class Class (val name: String, val superclass: SimpleType?, val body: List<Decl>): Decl
 
 // Top-Level
-data class Import (val iden: QualifiedIdentifier): Node
+data class Import (val components: List<String>): Node
 data class File (val imports: List<Import>, val classes: List<Class>): Node
