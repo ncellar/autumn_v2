@@ -97,7 +97,7 @@ fun Longest (vararg children: Parser) = Parser(*children) body@ { ctx ->
 /**
  * Succeeds matching nothing if [child] succeeds, else fails.
  */
-fun Lookahead (child: Parser) = Parser(child) { ctx ->
+fun Ahead(child: Parser) = Parser(child) { ctx ->
     ctx.snapshot().let { child.parse(ctx).andDo { ctx.restore(it) } }
 }
 
@@ -130,7 +130,7 @@ fun Seq (vararg children: Parser) = Parser(*children) { ctx ->
 /**
  * Matches the same thing as [child], else succeeds matching nothing.
  */
-fun Optional (child: Parser) = Parser(child) { ctx ->
+fun Opt (child: Parser) = Parser(child) { ctx ->
     child.parse(ctx).or { Success }
 }
 
@@ -152,7 +152,7 @@ fun OneMore (child: Parser) = Parser(child) { ctx ->
 /**
  * Matches [n] repetitions of [child], else fails.
  */
-fun NTimes (n: Int, child: Parser) = Parser(child) body@ { ctx ->
+fun Repeat (n: Int, child: Parser) = Parser(child) body@ { ctx ->
     val snapshot = ctx.snapshot()
     for (i in 1..n) {
         val result = child.parse(ctx)
@@ -165,11 +165,23 @@ fun NTimes (n: Int, child: Parser) = Parser(child) body@ { ctx ->
 }
 
 /**
+ * Matches zero or more repetition of [item], separated by [sep].
+ *
+ * Equivalent to `Optional(Seq(item, ZeroMore(Seq(sep, item))))`
+ */
+fun Around (item: Parser, sep: Parser) = Parser(item, sep) { ctx ->
+    item.parse(ctx) and {
+        while (transact(ctx) { sep.parse(ctx) and { item.parse(ctx) } } is Success);
+        Success
+    } or { Success }
+}
+
+/**
  * Matches one or more repetition of [item], separated by [sep].
  *
  * Equivalent to `Seq(item, ZeroMore(Seq(sep, item)))`
  */
-fun Separated (item: Parser, sep: Parser) = Parser(item, sep) { ctx ->
+fun Around1 (item: Parser, sep: Parser) = Parser(item, sep) { ctx ->
     item.parse(ctx) and {
         while (transact(ctx) { sep.parse(ctx) and { item.parse(ctx) } } is Success);
         Success
@@ -413,13 +425,13 @@ fun BuildMaybe (child: Parser)
 
 /**
  * Syntactic sugar for `BuildMaybe(Optional(child))`.
- * See [BuildMaybe], [Optional].
+ * See [BuildMaybe], [Opt].
  */
-fun BuildOptional (child: Parser)
-    = BuildMaybe(Optional(child)) withDefiner "BuildOptional"
+fun BuildOpt(child: Parser)
+    = BuildMaybe(Opt(child)) withDefiner "BuildOptional"
 
 /**
- * Same as [Optional] but pushes a boolean on the stack depending on whether the parser matched.
+ * Same as [Opt] but pushes a boolean on the stack depending on whether the parser matched.
  */
 fun AsBool (child: Parser) = Parser (child) { ctx ->
     child.parse(ctx) or { Success } after { ctx.stack.push(it == Success) }

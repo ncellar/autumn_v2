@@ -1,6 +1,110 @@
 package norswap.autumn.parsers
 import norswap.autumn.*
 
+/// Parsing Characters /////////////////////////////////////////////////////////////////////////////
+
+/**
+ * [AnyChar]
+ */
+val any = AnyChar()
+
+/**
+ * [CharRange]`(this, c)`
+ */
+infix fun Char.through(c: Char)
+    = CharRange(this, c)
+
+/**
+ * [Str]`(this)`
+ */
+val String.lit: Parser
+    get() = Str(this)
+
+/**
+ * [CharSet]`(*this.toCharArray()`
+ */
+val String.set: Parser
+    get() = CharSet(*toCharArray())
+
+/// Lookahead //////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * [Ahead]`(this)`
+ */
+val Parser.ahead: Parser
+    get() = Ahead(this)
+
+/**
+ * [Not]`(this)`
+ */
+val Parser.not: Parser
+    get() = Not(this)
+
+/// Sequencing and Optionals ///////////////////////////////////////////////////////////////////////
+
+/**
+ * [Opt]`(this)`
+ */
+val Parser.opt: Parser
+    get() = Opt(this)
+
+/**
+ * [ZeroMore]`(this)`
+ */
+val Parser.repeat: Parser
+    get() = ZeroMore(this)
+
+/**
+ * [OneMore]`(this)`
+ */
+val Parser.repeat1: Parser
+    get() = OneMore(this)
+
+/**
+ * [Repeat]`(n, this)`
+ */
+fun Parser.repeat(n: Int)
+    = Repeat(n, this)
+
+/**
+ * [Around]`(this, inside)`
+ */
+infix fun Parser.around(inside: Parser)
+    = Opt(Around(this, inside))
+
+/**
+ * [Around1]`(this, inside)`
+ */
+infix fun Parser.around1(inside: Parser)
+    = Around1(this, inside)
+
+/// Until //////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * [Until]`(this, until, matchUntil = true, matchSome = false)`
+ */
+infix fun Parser.until(until: Parser)
+    = Until(this, until, matchUntil = true, matchSome = false)
+
+/**
+ * [Until]`(this, until, matchUntil = true, matchSome = true)`
+ */
+infix fun Parser.until1(until: Parser)
+    = Until(this, until, matchUntil = true, matchSome = true)
+
+/**
+ * [Until]`(this, until, matchUntil = false, matchSome = false)`
+ */
+infix fun Parser.until_(until: Parser)
+    = Until(this, until, matchUntil = true, matchSome = false)
+
+/**
+ * [Until]`(this, until, matchUntil = false, matchSome = true)`
+ */
+infix fun Parser.until1_(until: Parser)
+    = Until(this, until, matchUntil = true, matchSome = true)
+
+
 /// Failure Handling ///////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -62,10 +166,10 @@ val Parser.buildMaybe: Parser
     get() = BuildMaybe(this)
 
 /**
- * See [BuildOptional].
+ * See [BuildOpt].
  */
-val Parser.buildOptional: Parser
-    get() = BuildOptional(this)
+val Parser.buildOpt: Parser
+    get() = BuildOpt(this)
 
 /**
  * See [AsBool].
