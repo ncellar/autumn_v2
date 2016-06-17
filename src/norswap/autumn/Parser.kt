@@ -93,6 +93,19 @@ abstract class Parser (vararg val children: Parser)
     var name: String? = null
 
     /**
+     * The name of this class, or the name of the function containing the [Parser.invoke]
+     * call that created this parser (possibly suffixed by $2, $3, ...) if the function contains
+     * more than one [Parser.invoke] invocation.
+     *
+     * You can set this explicitly in order to more precisely define the nature of the
+     * parser (e.g. if a parser class has important parameters, or for syntactic sugars).
+     */
+    var definer: String
+        = javaClass.simpleName
+        .removeSuffix("\$\$inlined\$invoke\$1")
+        .replace("\$\$inlined\$invoke", "")
+
+    /**
      * If true, don't trace the children of this parser when [Context.logTrace] is set.
      * Default: false.
      */
@@ -179,29 +192,16 @@ abstract class Parser (vararg val children: Parser)
     /// Strings ------------------------------------------------------------------------------------
 
     /**
-     * Returns the name of this class, or the name of the function containing the [Parser.invoke]
-     * call that created this parser (possibly suffixed by $2, $3, ...) if the function contains
-     * more than one [Parser.invoke] invocation.
-     *
-     * You can override this in your parser in order to more precisely define the nature of the
-     * parser (e.g. if a parser class has important parameters).
-     */
-    open fun definer(): String
-        = javaClass.simpleName
-            .removeSuffix("\$\$inlined\$invoke\$1")
-            .replace("\$\$inlined\$invoke", "")
-
-    /**
      * Prints the [name] of the Parser, if it has one, and its definer.
      */
     fun toStringSimple(): String
-        = if (name != null) "$name (${definer()})" else definer()
+        = if (name != null) "$name (${definer})" else definer
 
     /**
      * Prints the parser: either its [name] and class, or its definer and children.
      */
     final override fun toString()
-        = name ?: "${definer()} (${children.joinToString()})"
+        = name ?: "${definer} (${children.joinToString()})"
 
     /// Failures -----------------------------------------------------------------------------------
 

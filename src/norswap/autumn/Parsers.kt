@@ -143,6 +143,34 @@ fun OneMore (child: Parser) = Parser(child) { ctx ->
 }
 
 /**
+ * Matches [n] repetitions of [child], else fails.
+ */
+fun NTimes (n: Int, child: Parser) = Parser(child) body@ { ctx ->
+    val snapshot = ctx.snapshot()
+    for (i in 1..n) {
+        val result = child.parse(ctx)
+        if (result is Failure) {
+            ctx.restore(snapshot)
+            return@body result
+        }
+    }
+    return@body Success
+}
+
+/**
+ * Matches one or more repetition of [item], separated by [sep].
+ *
+ * Equivalent to `Seq(item, ZeroMore(Seq(sep, item)))`
+ */
+fun Separated (item: Parser, sep: Parser) = Parser(item, sep) { ctx ->
+    item.parse(ctx) and {
+        while (ctx.transact { sep.parse(ctx) and { item.parse(ctx) } } is Success);
+        Success
+}   }
+
+/// Until //////////////////////////////////////////////////////////////////////////////////////////
+
+/**
  * Matches zero or more repetition of [repeat] (that do not match [until]), followed by [until].
  *
  * [matchUntil] (true by default) determines whether [until] is part of the final match.
@@ -187,34 +215,9 @@ class Until (
         return Success
     }
 
-    override fun definer() = super.definer() +
-        "(${if (!matchUntil) "!" else ""}matchUntil, ${ if (!matchSome) "!" else ""}matchSome)"
-}
-
-/**
- * Matches [n] repetitions of [child], else fails.
- */
-fun NTimes (n: Int, child: Parser) = Parser(child) body@ { ctx ->
-    val snapshot = ctx.snapshot()
-    for (i in 1..n) {
-        val result = child.parse(ctx)
-        if (result is Failure) {
-            ctx.restore(snapshot)
-            return@body result
-        }
-    }
-    return@body Success
-}
-
-/**
- * Matches one or more repetition of [item], separated by [sep].
- *
- * Equivalent to `Seq(item, ZeroMore(Seq(sep, item)))`
- */
-fun Separated (item: Parser, sep: Parser) = Parser(item, sep) { ctx ->
-    item.parse(ctx) and {
-        while (ctx.transact { sep.parse(ctx) and { item.parse(ctx) } } is Success);
-        Success
+    init {
+        definer  = "(${if (!matchUntil) "!" else ""}matchUntil, "
+        definer += "${ if (!matchSome) "!" else ""}matchSome)"
     }
 }
 
