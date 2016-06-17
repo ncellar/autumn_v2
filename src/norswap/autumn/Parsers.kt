@@ -4,6 +4,14 @@ import norswap.autumn.*
 import norswap.violin.stream.*
 import norswap.violin.utils.after
 
+/// Helpers ////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Returns the receiver after setting its definer to [definer].
+ */
+infix fun Parser.withDefiner(definer: String)
+    = this after { this.definer = definer }
+
 /// Parsing Characters /////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -11,7 +19,7 @@ import norswap.violin.utils.after
  */
 fun AnyChar() = Parser { ctx ->
     ctx.succeed { text[pos] != '\u0000' }
-        .ifSuccess { ++ctx.pos }
+        .andDo { ++ctx.pos }
 }
 
 /**
@@ -19,7 +27,7 @@ fun AnyChar() = Parser { ctx ->
  */
 fun CharPred (p: (Char) -> Boolean) = Parser { ctx ->
     ctx.succeed { p(text[pos]) }
-        .ifSuccess { ++ctx.pos }
+        .andDo { ++ctx.pos }
 }
 
 /**
@@ -27,7 +35,7 @@ fun CharPred (p: (Char) -> Boolean) = Parser { ctx ->
  */
 fun CharRange (start: Char, end: Char) = Parser { ctx ->
     ctx.succeed { val p = text[pos] ; start <= p && p <= end }
-        .ifSuccess { ++ctx.pos }
+        .andDo { ++ctx.pos }
 }
 
 /**
@@ -35,7 +43,7 @@ fun CharRange (start: Char, end: Char) = Parser { ctx ->
  */
 fun CharSet (vararg chars: Char) = Parser { ctx ->
     ctx.succeed { chars.contains(text[pos]) }
-        .ifSuccess { ++ctx.pos }
+        .andDo { ++ctx.pos }
 }
 
 /**
@@ -43,7 +51,7 @@ fun CharSet (vararg chars: Char) = Parser { ctx ->
  */
 fun Str (str: String) = Parser { ctx ->
     ctx.succeed { text.regionMatches(pos, str, 0, str.length) }
-        .ifSuccess { ctx.pos += str.length }
+        .andDo { ctx.pos += str.length }
 }
 
 /// Choices ////////////////////////////////////////////////////////////////////////////////////////
@@ -91,7 +99,7 @@ fun Longest (vararg children: Parser) = Parser(*children) body@ { ctx ->
  * Succeeds matching nothing if [child] succeeds, else fails.
  */
 fun Lookahead (child: Parser) = Parser(child) { ctx ->
-    ctx.snapshot().let { child.parse(ctx).ifSuccess { ctx.restore(it) } }
+    ctx.snapshot().let { child.parse(ctx).andDo { ctx.restore(it) } }
 }
 
 /**
@@ -263,8 +271,7 @@ fun PanicMsg (msg: Parser.(Context) -> String)
  * Matches [child], else throws the failure it returned.
  */
 fun Paranoid (child: Parser) = Parser(child) { ctx ->
-    ctx.parse(child)
-        .ifFailure { panic(it) }
+    ctx.parse(child) orDo { panic(it) }
 }
 
 /**
@@ -276,45 +283,111 @@ fun Chill (child: Parser, pred: (Failure) -> Boolean = { true }) = Parser(child)
 }
 
 /**
- * Matches this parser, else raises the failure returned by [e].
+ * Matches [child], else raises the failure returned by [e].
  */
-infix fun Parser.orRaise(e: Parser.(Context) -> Failure) = Parser(this) { ctx ->
-    ctx.parse(this@orRaise).or { e(ctx) }
+fun OrRaise (child: Parser, e: Parser.(Context) -> Failure) =  Parser(child) { ctx ->
+    ctx.parse(child) or { e(ctx) }
 }
 
 /**
  * Matches this parser, else raises a failure with the message returned by [msg].
  */
-infix fun Parser.orRaiseMsg(msg: Parser.(Context) -> String) = this.orRaise { it.failure(msg = msg) }
+fun OrRaiseMsg (child: Parser, msg: Parser.(Context) -> String)
+    = OrRaise(child) { it.failure(msg = msg) }
+
+/// Debugging //////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Returns a parser that matches the same as the parser it is called on, but logs
  * the parsing state beforehand.
  */
-fun Parser.afterPrintingState() = Parser(this) { ctx ->
+fun AfterPrintingState (child: Parser) = Parser(child) { ctx ->
     ctx.logStream.println(ctx.stateString())
-    this@afterPrintingState.parse(ctx)
+    child.parse(ctx)
 }
 
 /**
  * Returns a parser that matches the same as the parser it is called on, but logs
  * the parsing state afterwards.
  */
-fun Parser.beforePrintingState() = Parser(this) { ctx ->
-    this@beforePrintingState.parse(ctx).after { ctx.logStream.println(ctx.stateString()) }
+fun BeforePrintingState (child: Parser) = Parser(child) { ctx ->
+    child.parse(ctx).after { ctx.logStream.println(ctx.stateString()) }
 }
+
+/// With ... ///////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * A parser that runs [f].
+ * Compared to the [Parser] function, inverts the receiver and the parameter.
+ */
+fun WithContext(f: Context.(Parser) -> Result)
+    = Parser { it.f(this) }
+
+/**
+ * Always succeeds after calling [f].
+ */
+fun DoWithContext(f: Context.(Parser) -> Unit)
+    = Parser { it.f(this) ; Success }
+
+/**
+ * Returns a parser that invokes [child] then, if successful, returns the result
+ * of [f], which is passed the input positions at which [child] was invoked.
+ */
+fun WithMatchStart (child: Parser, f: Parser.(Context, Int) -> Result) =
+    Parser (child) { ctx ->
+        val start = ctx.pos
+        child.parse(ctx) and { f(ctx, start) }
+    }
+
+/**
+ * Returns a parser that invokes [child] then, if successful, returns the result
+ * of [f], which is passed the text matched by [child].
+ */
+fun WithMatchString (child: Parser, f: Parser.(Context, String) -> Result) =
+    Parser (child) { ctx ->
+        val start = ctx.pos
+        child.parse(ctx) and { f(ctx, ctx.textFrom(start)) }
+    }
+
+/**
+ * Like [WithMatchStart] but [f] always succeeds.
+ */
+fun DoWithMatchStart (child: Parser, f: Parser.(Context, Int) -> Unit)
+    = WithMatchStart(child) { ctx, start -> f(ctx, start) ; Success }
+
+/**
+ * Like [WithMatchString] but [f] always succeeds.
+ */
+fun DoWithMatchString (child: Parser, f: Parser.(Context, String) -> Unit)
+    = WithMatchString(child) { ctx, str -> f(ctx, str) ; Success }
 
 /// AST Building ///////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with a
- * [StackAccess] wrapped around [Context.stack]. If [node] returns a non-null value, push it
- * onto the stack.
+ * Returns a parser that invokes [child] then, if successful, returns the result
+ * of [f] with a [StackAccess] receiver.
  */
-fun Parser.build(node: StackAccess.(StackAccess) -> Any?) = Parser(this) { ctx ->
-    val stack = StackAccess(ctx.stack)
-    this@build.parse(ctx)
-        .ifSuccess { stack.prepareAccess() ; stack.node(stack) ?. let { stack.push(it) } }
+fun WithStack (child: Parser, f: StackAccess.() -> Result) = Parser(child) { ctx ->
+    val stack = StackAccess(ctx, this, ctx.stack)
+    child.parse(ctx) and { stack.prepareAccess() ; stack.f() }
+}
+
+/**
+ * Like [WithStack], except [f] always succeeds.
+ */
+fun DoWithStack (child: Parser, f: StackAccess.() -> Unit) = Parser(child) { ctx ->
+    val stack = StackAccess(ctx, this, ctx.stack)
+    child.parse(ctx) andDo { stack.prepareAccess() ; stack.f() }
+}
+
+/**
+ * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with a
+ * [StackAccess] and pushes the value it returns onto the stack.
+ */
+fun Build (child: Parser, node: StackAccess.() -> Any) = Parser(child) { ctx ->
+    val stack = StackAccess(ctx, this, ctx.stack)
+    child.parse(ctx)
+        .andDo { stack.prepareAccess() ; stack.node().let { stack.push(it) } }
 }
 
 /**
@@ -323,33 +396,37 @@ fun Parser.build(node: StackAccess.(StackAccess) -> Any?) = Parser(this) { ctx -
  *
  * Also see [Grammar.leaf].
  */
-fun Parser.buildLeaf(node: (String) -> Any) =
-    ifMatch { stack.push(node(it)) }
-
+fun BuildLeaf (child: Parser, node: (String) -> Any)
+    = child doWithMatchString { ctx, str -> ctx.stack.push(node(str)) } withDefiner "BuildLeaf"
 /**
  * Returns a parser wrapping this parser. If the wrapped parser succeeds, tries to pop an item
  * from the result of [stack], returning an instance of [Maybe] depending on the result.
  */
-fun Parser.perhaps(): Parser =
-    build { maybe() }
+fun BuildMaybe (child: Parser)
+    = DoWithStack(child) {
+        val maybe: Any? = maybe()
+        if (maybe != null) stack.push(maybe)
+    } withDefiner "BuildMaybe"
 
 /**
- * Syntactic sugar for `Optional(this).perhaps()`.
+ * Syntactic sugar for `BuildMaybe(Optional(child))`.
+ * See [BuildMaybe], [Optional].
  */
-fun Parser.maybe() = Optional(this).perhaps()
+fun BuildOptional (child: Parser)
+    = BuildMaybe(Optional(child)) withDefiner "BuildOptional"
 
 /**
  * Same as [Optional] but pushes a boolean on the stack depending on whether the parser matched.
  */
-fun Parser.asBool() = Parser { ctx ->
-    this@asBool.parse(ctx) or { Success } after { ctx.stack.push(it == Success) }
+fun AsBool (child: Parser) = Parser (child) { ctx ->
+    child.parse(ctx) or { Success } after { ctx.stack.push(it == Success) }
 }
 
 /**
- * Syntactic sugar for `this.build { it.rest<T>() }`.
+ * Syntactic sugar for `Build(child) { rest<T>() }`.
  */
-inline fun <reified T: Any> Parser.collect(): Parser =
-    build { it.rest<T>() }
+fun <T: Any> Collect (child: Parser)
+    = Build(child) { rest<T>() } withDefiner "Collect"
 
 /// Misc ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -357,59 +434,20 @@ inline fun <reified T: Any> Parser.collect(): Parser =
  * Returns a parser that uses [generator] to generate a parser at parse-time, run it and returns
  * and its result.
  */
-fun Dynamic(generator: (Context) -> Parser) = Parser { ctx -> generator(ctx).parse(ctx) }
-
-/**
- * Always succeeds after calling [f].
- */
-fun Perform(f: Context.() -> Unit)
-    = Parser { it.f() ; Success }
+fun Dynamic(generator: Parser.(Context) -> Parser)
+    = Parser { ctx -> generator(ctx).parse(ctx) }
 
 /**
  * Succeeds if [pred] holds, or fails with the failure generated by [fail]
  * (by default: [Parser.failure]).
  */
-fun Predicate(fail: Parser.(Context) -> Failure = { it.failure() }, pred: Context.() -> Boolean)
+fun Predicate (fail: Parser.(Context) -> Failure = { it.failure() }, pred: Context.() -> Boolean)
     = Parser { ctx -> if (ctx.pred()) Success else fail(ctx) }
 
 /**
  * Succeeds if [pred] holds, or fails with a failure using the message generated by [msg].
  */
-fun PredicateMsg(pred: Context.() -> Boolean, msg: Parser.(Context) -> String)
+fun PredicateMsg (msg: Parser.(Context) -> String, pred: Context.() -> Boolean)
     = Parser { ctx -> if (ctx.pred()) Success else ctx.failure(msg) }
-
-/**
- * Returns a parser that wraps this parser, executing it then, if successful, returning the result
- * of [f]. [f] is passed the input position at which the parser was invoked as second parameter.
- */
-infix fun Parser.ifSuccessThen(f: Parser.(ctx: Context, start: Int) -> Result) = Parser(this) { ctx ->
-    val start = ctx.pos
-    this@ifSuccessThen.parse(ctx) and { f(ctx, start) }
-}
-
-/**
- * Returns a parser that wraps this parser, executing it then, if successful, returning the result
- * of [f]. [f] is passed the matched input text as second parameter.
- */
-infix fun Parser.ifMatchThen(f: Parser.(ctx: Context, str: String) -> Result) = Parser(this) { ctx ->
-    val start = ctx.pos
-    this@ifMatchThen.parse(ctx) and { f(ctx, ctx.textFrom(start)) }
-}
-
-/**
- * Like [ifSuccessThen] but [f] always succeeds.
- */
-infix fun Parser.ifSuccess(f: Context.(start: Int) -> Unit) = Parser(this) { ctx ->
-    val start = ctx.pos
-    this@ifSuccess.parse(ctx).ifSuccess { ctx.f(start) }
-}
-
-/**
- * Like [ifMatchThen] but [f] always succeeds.
- */
-infix fun Parser.ifMatch(f: Context.(str: String) -> Unit) = Parser(this) { ctx ->
-    val start = ctx.pos
-    this@ifMatch.parse(ctx).ifSuccess { ctx.f(ctx.textFrom(start)) }
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -34,7 +34,7 @@ open class Result internal constructor ()
     /**
      * Run [body] if this is a Success.
      */
-    inline fun ifSuccess(body: () -> Unit): Result = when (this) {
+    infix inline fun andDo(body: () -> Unit): Result = when (this) {
         is Success ->  { body() ; this }
         else -> this
     }
@@ -42,7 +42,7 @@ open class Result internal constructor ()
     /**
      * Run [body] if this is a [Failure].
      */
-    inline fun ifFailure(body: (Failure) -> Unit): Result = when (this) {
+    infix inline fun orDo(body: (Failure) -> Unit): Result = when (this) {
         is Failure -> { body(this) ; this }
         else -> this
     }

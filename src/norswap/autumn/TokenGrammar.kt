@@ -85,7 +85,7 @@ abstract class TokenGrammar: Grammar()
         /** See [typedTokenParsers]. */
         typedTokenParsers.add(Parser(this) { ctx ->
             val pos = ctx.pos
-            this.parse(ctx).ifSuccess {
+            this.parse(ctx).andDo {
                 ctx.stack.push(
                     Token(type, pos, ctx.pos, value(ctx.text.substring(pos, ctx.pos))))
                 whitespace.parse(ctx)

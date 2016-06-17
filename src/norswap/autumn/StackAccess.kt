@@ -17,18 +17,18 @@ import norswap.violin.stream.*
  * if the consumer doesn't use them.
  *
  * The pushed items may be accessed through the list [items], but more commonly it is accessed
- * through the [next], [invoke], [maybe], and [rest].
+ * through the [get], [maybe], and [rest].
  *
  * Items may be pushed on the stack through [push].
  *
  * Within Autumn, StackAccess is used as both the receiver and first parameter (to enable the
  * `it` syntax) to the callback passed to [Grammar.build].
  *
- * The index of the next item that will be returned by [next] is available as [cur].
+ * The index of the next item that will be returned by [get] is available as [cur].
  * This enables indexing relative to the current position.
  */
 @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE", "unused")
-class StackAccess(val stack: Stack<Any>)
+class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>)
 {
     private object StackMarker
     init { stack.push(StackMarker) }
@@ -48,32 +48,30 @@ class StackAccess(val stack: Stack<Any>)
     }
 
     /**
-     * The index of the next item in the stack to be returned by [next].
+     * The index of the next item in the stack to be returned by [get].
      */
     var cur = 0
 
     /**
-     * Retrieve the item at the specified index.
+     * Retrieve the item at the specified index (default: [cur]++).
      * @throws Failure if the required position doesn't exist
      */
-    fun <T: Any> next(i: Int = cur++): T = items.getOrNull(i) as T?
+    fun <T: Any> get(i: Int = cur++): T
+        = items.getOrNull(i) as T?
         ?: throw Error("No items at index $i (only ${items.size} items available)")
 
     /**
-     * Syntactic sugar for `next(pos)`.
-     */
-    inline operator fun <T: Any> invoke(pos: Int = cur++): T = next(pos)
-
-    /**
-     * Uses [next] to retrieve an instance of `Maybe<T>` ([Maybe]) and returns
+     * Uses [get] to retrieve an instance of `Maybe<T>` ([Maybe]) and returns
      * a corresponding nullable (through [Maybe.invoke]).
      */
-    inline fun <T: Any> maybe(pos: Int = cur++): T? = next<Maybe<T>>(pos)()
+    inline fun <T: Any> maybe(pos: Int = cur++): T?
+        = get<Maybe<T>>(pos)()
 
     /**
      * Returns the remaining items as a list of the specified type.
      */
-    fun <T: Any> rest(): List<T> = items.subList(cur, items.size) as List<T>
+    fun <T: Any> rest(): List<T>
+        = items.subList(cur, items.size) as List<T>
 
     /**
      * Push an item on the stack.
