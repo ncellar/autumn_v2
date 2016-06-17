@@ -3,6 +3,12 @@ import norswap.autumn.*
 import norswap.violin.stream.*
 import norswap.violin.utils.after
 
+/**
+ * This file defines all of Autumn's pre-defined parsers.
+ *
+ * Syntactic sugars for many of those are to be found in file `Syntax.kt` of this package.
+ */
+
 /// Helpers ////////////////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -282,7 +288,7 @@ fun PanicMsg (msg: Parser.(Context) -> String)
  * Matches [child], else throws the failure it returned.
  */
 fun Paranoid (child: Parser) = Parser(child) { ctx ->
-    ctx.parse(child) orDo { panic(it) }
+    child.parse(ctx) or { panic(it) }
 }
 
 /**
@@ -297,7 +303,7 @@ fun Chill (child: Parser, pred: (Failure) -> Boolean = { true }) = Parser(child)
  * Matches [child], else raises the failure returned by [e].
  */
 fun OrRaise (child: Parser, e: Parser.(Context) -> Failure) =  Parser(child) { ctx ->
-    ctx.parse(child) or { e(ctx) }
+    child.parse(ctx) or { e(ctx) }
 }
 
 /**
@@ -470,7 +476,9 @@ fun PredicateMsg (msg: Parser.(Context) -> String, pred: Context.() -> Boolean)
  * The new context does not share state with the current context.
  */
 fun Bounded (source: Parser, around: Parser) =
-    WithMatchString(source) { ctx, str -> Context(str).parse(around) } withDefiner "Bounded"
+    WithMatchString(source) { ctx, str ->
+        tryParse { around.parse(Context(str)) }
+    } withDefiner "Bounded"
 
 /**
  * Invokes [f] with a new context whose input is the text matched by [source].
@@ -478,6 +486,8 @@ fun Bounded (source: Parser, around: Parser) =
  * through lambda capture.
  */
 fun Bounded (child: Parser, f: Parser.(Context) -> Result)
-    = WithMatchString(child) { ctx, str -> Context(str).parse(Parser(body = f)) } withDefiner "Bounded"
+    = WithMatchString(child) { ctx, str ->
+        tryParse { f(Context(str)) }
+    } withDefiner "Bounded"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
