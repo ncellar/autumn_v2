@@ -1,4 +1,4 @@
-package norswap.autumn
+package norswap.autumn.utils
 
 /**
  * Returns a version of this string where all tabs have been fully expanded, so that each tab
@@ -20,8 +20,7 @@ fun String.expandTabs(tabSize: Int): String {
         }
         else -> {
             buf.append(c)
-            ++ col
-        }
-    }
+            ++col
+    }   }
     return buf.toString()
 }

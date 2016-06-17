@@ -1,4 +1,5 @@
 package norswap.autumn
+import norswap.autumn.utils.JUtils.NoStackTrace
 import norswap.violin.link.*
 import norswap.violin.stream.*
 import norswap.violin.utils.plusAssign
@@ -73,7 +74,7 @@ open class Failure(
 
 ): Result()
 
-internal class Carrier (val failure: Failure): JUtils.NoStackTrace(null)
+internal class Carrier (val failure: Failure): NoStackTrace(null)
 
 /**
  * Runs [body] and returns its result. If it panics ([Parser.panic]), return the failure if [pred]
