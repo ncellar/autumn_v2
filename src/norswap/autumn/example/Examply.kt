@@ -288,8 +288,6 @@ object examply: Grammar()
             ZeroMore(import).collect<Import>(),
             ZeroMore(`class`).collect<Class>()))
         .build { File(get(), get()) }
-
-    override val status = READY()
 }
 
 /// AST ////////////////////////////////////////////////////////////////////////////////////////////
