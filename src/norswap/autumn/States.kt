@@ -79,6 +79,10 @@ open class ValueStack<T: Any> (private var stack: LinkList<T> = LinkList())
 open class BottomUpStack<T: Any>(private var stack: LinkList<T> = LinkList())
 : State<LinkList<T>, LinkList<T>>, Stack<T> by stack
 {
+    fun at(i: Int): T? =
+        if (stack.size <= i) null
+        else stack.stream().limit(i).last()
+
     override fun snapshot() = stack.clone()
     override fun restore(snap: LinkList<T>) { stack = snap.clone() }
 
@@ -103,8 +107,9 @@ open class BottomUpStack<T: Any>(private var stack: LinkList<T> = LinkList())
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 open class MapState<K: Any, V: Any>(private var map: MutableMap<K, V> = HashMap())
-: State<Map<K, V>, Map<K, V>>, Map<K, V> by map
+: State<Map<K, V>, Map<K, V>>, MutableMap<K, V> by map
 {
+    fun map() = map
     override fun snapshot() = HashMap(map)
     override fun restore(snap: Map<K, V>) { map = HashMap(map) }
     override fun diff(snap: Map<K, V>) = HashMap(map)
