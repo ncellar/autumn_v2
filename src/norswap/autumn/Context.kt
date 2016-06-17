@@ -109,24 +109,6 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
         states = stateMap.values.toList()
     }
 
-    ///---------------------------------------------------------------------------------------------
-
-    /**
-     * This is how you start a parse!
-     *
-     * If the parser throws an exception it will be caught and encapsulated in a [DebugFailure]
-     * that will be returned. For panics, the failure is simply returned as such.
-     */
-    fun parse(p: Parser): Result {
-        try {
-            return p.parse(this)
-        } catch (e: Carrier) {
-            return e.failure
-        } catch (e: Exception) {
-            return DebugFailure(pos, { "exception thrown by parser" }, e, trace.link, snapshot())
-        }
-    }
-
     // State Retrieval -------------------------------------------------------------------------
 
     /**

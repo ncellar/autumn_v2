@@ -7,14 +7,11 @@ import kotlin.reflect.jvm.javaType
 /**
  * Subclass this to create new grammars.
  *
- * As **last** statement of the subclass, put in the line:
- * `override val status = READY()`
- *
  * Within the body of the class, parser-valued fields will be indexed by the name of the property.
  * This enables creating dynamically checked recursive references via [ref] or its [not] shorthand.
- * If the same parser is assigned to multiple properties, keep the first name as the display name
- * and use the other names as referable aliases.
- * (This is enacted by the call to `READY()`).
+ *
+ * If the same parser is assigned to multiple properties, the first name is kept as canonical name
+ * (only this name can be used with [ref]).
  *
  * Don't forget to override [requiredStates] if required.
  */
@@ -30,7 +27,7 @@ abstract class Grammar
     /**
      * Override this function to indicate which states are required to parse the grammar correctly.
      */
-    open fun requiredStates(): List<State<*,*>> = emptyList()
+    open fun requiredStates(): List<State<*, *>> = emptyList()
 
     /**
      * The root parser for this grammar. Used by [parse].
@@ -44,11 +41,11 @@ abstract class Grammar
      */
     private fun parsers(): Stream<KProperty<*>> =
         javaClass.kotlin.memberProperties.stream()
-        .filter {
-            !it.returnType.isMarkedNullable
-            && Parser::class.java.isAssignableFrom(it.returnType.javaType as Class<*>)
-            && it.name != "tokenParser"
-        }
+            .filter {
+                !it.returnType.isMarkedNullable
+                    && Parser::class.java.isAssignableFrom(it.returnType.javaType as Class<*>)
+                    && it.name != "tokenParser"
+            }
 
     /**
      * The set of all parser names in this grammar.
@@ -60,36 +57,49 @@ abstract class Grammar
      */
     private val map = mutableMapOf<String, Parser>()
 
-    /**
-     * Adding `override val status = READY()` at the end of the grammar assigns its
-     * name to each parser and fills [map].
-     */
-    open protected inner class READY() {
-        init {
-            parsers().each {
-                val parser = it.call(this@Grammar) as Parser?
-                parser ?: throw Error(
-                     "`override val status = READY()` must appear **last** in the grammar.")
-
-                // Multiple assignment from the same parser: keep the first name, use the others
-                // as aliases.
-                parser.name = parser.name ?: it.name
-                map.put(it.name, parser)
-    }   }   }
+    private var initialized = false
 
     /**
-     * Implement this as the **last** statement in the class with value `READY()`.
+     * This function is run when the grammar is "initialized", which occurs when [Context.parse]
+     * or [Grammar.parse] is called with this grammar for the first time.
+     *
+     * You can override this if you extend [Grammar], but you must call the super-method.
      */
-    abstract protected val status: READY
+    open fun initialize() {
+        if (initialized) return
+        parsers().each {
+            val parser = it.call(this@Grammar) as Parser
+            // Multiple assignment from the same parser: keep the first name, use the others
+            // as aliases.
+            parser.name = parser.name ?: it.name
+            map.put(it.name, parser)
+        }
+        initialized = true
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
+     * This is how a parse is started.
+     *
      * Parse the given [text] using this grammar's [root], building a context that contains
      * this grammar's required [states] as well as [moreStates].
+     *
+     * If the parser throws an exception it will be caught and encapsulated in a [DebugFailure]
+     * that will be returned. For panics, the failure is simply returned as such.
      */
-    fun parse(text: String, vararg moreStates: State<*, *>): Result
-        = Context(text, *(requiredStates().toTypedArray() + moreStates)).parse(root)
+    fun parse(text: String, vararg moreStates: State<*, *>): Result {
+        initialize()
+        val ctx = Context(text, *(requiredStates().toTypedArray() + moreStates))
+        try {
+            return root.parse(ctx)
+        } catch (e: Carrier) {
+            return e.failure
+        } catch (e: Exception) {
+            return DebugFailure(ctx.pos, { "exception thrown by parser" }, e,
+                ctx.trace.link, ctx.snapshot())
+        }
+    }
 
     /// REFS ///////////////////////////////////////////////////////////////////////////////////////
 
@@ -104,16 +114,10 @@ abstract class Grammar
         return Ref(name)
     }
 
-    /**
-     * Returns the parse named [name] in this grammar.
-     */
-    operator fun get(name: String): Parser
-        = map[name] ?: throw Error("unknown parser: $name")
-
     /// SYNTAX /////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * `!"str" is a shorthand for `ref("str")` (see [ref]).
+     * `!"str" is a shorthand for [ref]`("str")`.
      */
     operator fun String.not(): Ref = ref(this)
 
@@ -123,7 +127,7 @@ abstract class Grammar
     operator fun String.unaryPlus() = Seq(Str(this), whitespace)
 
     /**
-     * Syntactic sugar for `Seq(buildLeaf(node), whitespace)` ([buildLeaf]).
+     * Syntactic sugar for `Seq(buildLeaf(node), whitespace)` (see [buildLeaf]).
      */
     fun Parser.leaf(node: (String) -> Any) = Seq(buildLeaf(node), whitespace)
 

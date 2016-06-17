@@ -3,22 +3,19 @@ import norswap.autumn.TokenGrammar.TokenDisambiguation.*
 import norswap.autumn.parsers.*
 
 /**
- * Adds lexical analysis (tokenization) emulation to [Grammar]
+ * Adds lexical analysis (tokenization) emulation to [Grammar].
  *
  * The basic rule is that at each input position, there is at most one token (i.e. any ambiguities
  * must be resolved at the lexical level). Users can register new token types with the [token]
  * function, which returns a parser.
  *
  * All parsers returned by [token] determine the type of token (if any) present at the given input
- * position. If multiple tokens could match, they are disambiguated by one of two methods:
- * [ORDERING] or [LONGEST_MATCH], depending on the value of [tokenDisambiguation]. The parsers
- * then check if the matched token is of the required type. If so, they push a [Token] value onto
+ * position. If multiple types of tokens could match, they are disambiguated by one of two methods:
+ * [ORDERING] or [LONGEST_MATCH], depending on the value of [tokenDisambiguation]. The parser
+ * then checks if the matched token is of the required type. If so, it pushes a [Token] value onto
  * [Context.stack].
  *
  * You can enable caching for tokens by passing a [TokenCache] to the [Context].
- *
- * As **last** statement of the subclass, put in the line:
- * `override val status = READY()`
  */
 abstract class TokenGrammar: Grammar()
 {
@@ -64,15 +61,15 @@ abstract class TokenGrammar: Grammar()
      */
     private var typedTokenParsers = mutableListOf<Parser>()
 
-    protected inner class READY(): Grammar.READY() {
-        init {
-            val msg = "Could not match any token"
-            val array = typedTokenParsers.toTypedArray()
+    override fun initialize() {
+        super.initialize()
+        val msg = "Could not match any token"
+        val array = typedTokenParsers.toTypedArray()
 
-            tokenParser = when(tokenDisambiguation) {
-                ORDERING        -> Choice  (*array).orRaiseMsg { msg }
-                LONGEST_MATCH   -> Longest (*array).orRaiseMsg { msg }
-    }   }   }
+        tokenParser = when(tokenDisambiguation) {
+            ORDERING -> Choice  (*array).orRaiseMsg { msg }
+            LONGEST_MATCH -> Longest (*array).orRaiseMsg { msg }
+    }   }
 
     /**
      * Returns a parser for a token whose syntax is defined by this parser and whose value
