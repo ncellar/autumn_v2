@@ -1,4 +1,3 @@
-@file:Suppress("PackageDirectoryMismatch")
 package norswap.autumn.parsers
 import norswap.autumn.*
 import norswap.violin.stream.*
