@@ -367,7 +367,7 @@ fun DoWithMatchString (child: Parser, f: Parser.(Context, String) -> Unit)
  * of [f] with a [StackAccess] receiver.
  */
 fun WithStack (child: Parser, f: StackAccess.() -> Result) = Parser(child) { ctx ->
-    val stack = StackAccess(ctx, this, ctx.stack)
+    val stack = StackAccess(ctx, this, ctx.stack, true)
     child.parse(ctx) and { stack.prepareAccess() ; stack.f() }
 }
 
@@ -375,16 +375,17 @@ fun WithStack (child: Parser, f: StackAccess.() -> Result) = Parser(child) { ctx
  * Like [WithStack], except [f] always succeeds.
  */
 fun DoWithStack (child: Parser, f: StackAccess.() -> Unit) = Parser(child) { ctx ->
-    val stack = StackAccess(ctx, this, ctx.stack)
+    val stack = StackAccess(ctx, this, ctx.stack, false)
     child.parse(ctx) andDo { stack.prepareAccess() ; stack.f() }
 }
 
 /**
  * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with a
- * [StackAccess] and pushes the value it returns onto the stack.
+ * [StackAccess] and pushes the value it returns onto the stack. All nodes pushed by [child]
+ * will be popped from the stack.
  */
 fun Build (child: Parser, node: StackAccess.() -> Any) = Parser(child) { ctx ->
-    val stack = StackAccess(ctx, this, ctx.stack)
+    val stack = StackAccess(ctx, this, ctx.stack, false)
     child.parse(ctx)
         .andDo { stack.prepareAccess() ; stack.node().let { stack.push(it) } }
 }

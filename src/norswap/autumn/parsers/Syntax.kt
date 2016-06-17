@@ -32,9 +32,15 @@ val Parser.beforePrintingState: Parser
 /// AST Building ///////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * See [WithStack].
+ */
+infix fun Parser.withStack(node: StackAccess.() -> Result)
+    = WithStack(this, node)
+
+/**
  * See [DoWithStack].
  */
-infix fun Parser.withStack(node: StackAccess.() -> Unit)
+infix fun Parser.doWithStack(node: StackAccess.() -> Unit)
     = DoWithStack(this, node)
 
 /**

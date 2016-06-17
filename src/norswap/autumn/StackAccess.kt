@@ -8,30 +8,25 @@ import norswap.violin.stream.*
  * parser (the producer). This is specifically designed with [BottomUpStack] in mind,
  * typically to manipulate a stack of AST nodes.
  *
- * This works by pushing a marker on the stack before invoking the producer. After invoking
- * the producer, a call to [prepareAccess] unwinds the stack up to the marker, and exposes
- * the pushed items as a FIFO list (the first item pushed by the producer will be the first item
- * of the list).
+ * This works by saving the stack size before invoking the producer. After invoking
+ * the producer, a call to [prepareAccess] collects the nodes pushed by the producer
+ * into the [items] list (in the same order as they were pushed - FIFO instead of LIFO).
  *
- * The fact that the stack is unwound means that the items pushed by the producer are lost
- * if the consumer doesn't use them.
- *
- * The pushed items may be accessed through the list [items], but more commonly it is accessed
- * through the [get], [maybe], and [rest].
- *
+ * The pushed items are usually accessed through [get], [maybe] and [rest].
  * Items may be pushed on the stack through [push].
- *
- * Within Autumn, StackAccess is used as both the receiver and first parameter (to enable the
- * `it` syntax) to the callback passed to [Grammar.build].
  *
  * The index of the next item that will be returned by [get] is available as [cur].
  * This enables indexing relative to the current position.
+ *
+ * The [pop] parameter determines whether the nodes pushed by the producer should be popped
+ * from the stack after having been collected into [items].
+ *
+ * Within Autumn, StackAccess is used as the receiver and to the callback passed to [Grammar.build].
  */
-@Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE", "unused")
-class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>)
+class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>, val pop: Boolean)
 {
-    private object StackMarker
-    init { stack.push(StackMarker) }
+    private val size0: Int
+    init { size0 = stack.size }
     private lateinit var items: List<Any>
 
     /**
@@ -39,12 +34,10 @@ class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>)
      */
     fun prepareAccess() {
         items = stack.stream()
-            .upTo { it == StackMarker }
-            .apply { stack.pop() }
+            .limit(stack.size - size0)
+            .apply { if (pop) stack.pop() }
             .list()
             .asReversed()
-
-        stack.pop() // pop the marker
     }
 
     /**
@@ -56,6 +49,7 @@ class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>)
      * Retrieve the item at the specified index (default: [cur]++).
      * @throws Failure if the required position doesn't exist
      */
+    @Suppress("UNCHECKED_CAST")
     fun <T: Any> get(i: Int = cur++): T
         = items.getOrNull(i) as T?
         ?: throw Error("No items at index $i (only ${items.size} items available)")
@@ -64,12 +58,13 @@ class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>)
      * Uses [get] to retrieve an instance of `Maybe<T>` ([Maybe]) and returns
      * a corresponding nullable (through [Maybe.invoke]).
      */
-    inline fun <T: Any> maybe(pos: Int = cur++): T?
+    fun <T: Any> maybe(pos: Int = cur++): T?
         = get<Maybe<T>>(pos)()
 
     /**
      * Returns the remaining items as a list of the specified type.
      */
+    @Suppress("UNCHECKED_CAST")
     fun <T: Any> rest(): List<T>
         = items.subList(cur, items.size) as List<T>
 
