@@ -60,7 +60,7 @@ class Ref (val ref: String): Parser()
 
         val snapshot = ctx.snapshot()
         // initial seed is failure
-        var seed = Seed(ctx.pos, child, ctx.failure(), ctx.diff(snapshot))
+        var seed = Seed(ctx.pos, child, failure(ctx), ctx.diff(snapshot))
         ctx.seeds.push(seed)
 
         // iterate until the seed stops growing

@@ -107,6 +107,6 @@ abstract class TokenGrammar: Grammar()
             val result = tokenParser.parse(ctx)
             val token = ctx.stack.peek() as Token<*>?
             cache?.put(pos, TokenCacheEntry(result, ctx.pos, token))
-            return@body ctx.succeed { token?.type == type }
+            return@body succeed(ctx) { token?.type == type }
     }   }
 }
