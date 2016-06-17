@@ -72,4 +72,11 @@ class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>, v
      * Push an item on the stack.
      */
     fun push(item: Any) { stack.push(item) }
+
+    /**
+     * Ensures that all items pushed on the stack by the receiver are popped.
+     */
+    fun popAll() {
+        if (!pop) repeat(stack.size - size0) { stack.pop() }
+    }
 }
