@@ -110,3 +110,13 @@ val intComparator = object: Comparator<Int> {
 @Test fun associate() {
     assertEquals(Stream(1, 2, 3).associate { it to it }, mapOf(1 to 1, 2 to 2, 3 to 3))
 }
+
+@Test fun linkList() {
+    var i = 3
+    Stream(1, 2, 3).linkList().stream().each { assertEquals(it, i--) }
+}
+
+@Test fun set() {
+    val set = Stream(1, 2, 3).set()
+    assertEquals(set, setOf(1, 2, 3))
+}
