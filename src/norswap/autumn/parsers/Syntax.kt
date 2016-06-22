@@ -162,14 +162,8 @@ infix fun Parser.buildLeaf(node: (String) -> Any)
 /**
  * See [BuildMaybe].
  */
-val Parser.buildMaybe: Parser
+val Parser.maybe: Parser
     get() = BuildMaybe(this)
-
-/**
- * See [BuildOpt].
- */
-val Parser.buildOpt: Parser
-    get() = BuildOpt(this)
 
 /**
  * See [AsBool].
