@@ -1,6 +1,6 @@
 package norswap.autumn
+import norswap.violin.Maybe
 import norswap.violin.Stack
-import norswap.violin.maybe.*
 import norswap.violin.stream.*
 
 /**
