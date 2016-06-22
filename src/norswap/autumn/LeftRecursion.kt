@@ -7,7 +7,7 @@ data class Seed (
     val pos: Int,
     val parser: Parser,
     val res: Result,
-    val delta: Delta,
+    val delta: Delta?,
     var used: Boolean = false)
 {
     fun toString(ctx: Context): String {
@@ -45,22 +45,36 @@ class Seeds: ValueStack<Seed>() {
     }
 }
 
-class Ref (val ref: String): Parser()
+/**
+ * In order to handle left-recursion correctly, each invocation of a left-recursive parser
+ * much go through this parser.
+ *
+ * The idea is as follows: start by running the left-recursive parser while ignoring all
+ * left-recursive invocation, then re-run it, using the result of the initial parse as the result
+ * of all left-recursive invocations. Repeat until as much input as possible has been matched.
+ *
+ * In order to initially ignore left-recursive invocation, then to reuse the result of a parse,
+ * we use the [Seeds] state.
+ *
+ * Within a [Grammar], these parsers will be referenced by instances of [Ref].
+ *
+ * While this logic is only required for left-recursive parsers, we cannot automatically
+ * distinguish between left-recursive and other recursive parsers, hence [Grammar] will require
+ * this to be wrapped around all recursive parsers.
+ */
+open class Rec(val child: Parser): Parser(child)
 {
-    lateinit var child: Parser
-    init { name = "Ref($ref)" }
-
     override fun _parse_(ctx: Context): Result {
         // recursive Ref#parse call
         ctx.seeds.get(ctx.pos, child)?.let {
             it.used = true
-            ctx.merge(it.delta)
+            if (it.delta != null) ctx.merge(it.delta)
             return it.res
         }
 
         val snapshot = ctx.snapshot()
         // initial seed is failure
-        var seed = Seed(ctx.pos, child, failure(ctx), ctx.diff(snapshot))
+        var seed = Seed(ctx.pos, child, failure(ctx), null)
         ctx.seeds.push(seed)
 
         // iterate until the seed stops growing
@@ -71,13 +85,20 @@ class Ref (val ref: String): Parser()
                 return seed.res
             } else if (ctx.pos <= seed.pos) {
                 ctx.restore(snapshot)
-                ctx.merge(seed.delta)
+                if (seed.delta != null) ctx.merge(seed.delta!!)
                 return seed.res
             } else {
                 seed = Seed(ctx.pos, child, res, ctx.diff(snapshot))
                 ctx.restore(snapshot)
                 ctx.seeds.push(seed)
-            }
-        }
-    }
+}   }   }   }
+
+/**
+ * Creates a reference to the parser named by the string, to be resolved by the [Grammar] to which
+ * this parser belongs, before starting a parse (hence these reference are **not** dynamic).
+ */
+class Ref (val ref: String): Parser() {
+    init { name = "ref($ref)"}
+    lateinit var child: Parser
+    override fun _parse_(ctx: Context) = child.parse(ctx)
 }

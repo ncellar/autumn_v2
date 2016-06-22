@@ -34,7 +34,7 @@ abstract class Grammar
      */
     abstract val root: Parser
 
-    /// NAME / PARSER MAPPING //////////////////////////////////////////////////////////////////////
+    /// INITIALIZATION /////////////////////////////////////////////////////////////////////////////
 
     /**
      * Streams all properties of this class with type `Parser` (i.e. all parsers of this grammar).
@@ -47,16 +47,8 @@ abstract class Grammar
                     && it.name != "tokenParser"
             }
 
-    /**
-     * The set of all parser names in this grammar.
-     */
-    private val names = parsers().map { it.name }.set()
-
-    /**
-     * Maps parser names to the parser they designate.
-     */
-    private val map = mutableMapOf<String, Parser>()
-
+    private val refs = mutableListOf<Ref>()
+    private val recs = mutableMapOf<String, Rec>()
     private var initialized = false
 
     /**
@@ -68,12 +60,20 @@ abstract class Grammar
     open fun initialize() {
         if (initialized) return
         parsers().each {
-            val parser = it.call(this@Grammar) as Parser
+            val parser = it.call(this) as Parser
             // Multiple assignment from the same parser: keep the first name, use the others
             // as aliases.
             parser.name = parser.name ?: it.name
-            map.put(it.name, parser)
+            if (parser is Ref) refs.add(parser)
+            if (parser is Rec) recs.put(it.name, parser)
         }
+        refs.forEach {
+            val rec = recs[it.ref]
+            if (rec == null) throw Exception("Unresolved reference: ${it.ref}")
+            else it.child = rec
+        }
+        recs.clear()
+        refs.clear()
         initialized = true
     }
 
@@ -101,25 +101,17 @@ abstract class Grammar
         }
     }
 
-    /// REFS ///////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Creates a reference to the parser named by the string.
-     * This reference is *not* dynamic: it will be resolved the first time it is used.
-     *
-     * Throws an error if the grammar does not possess a parser with the given name.
-     */
-    fun ref(name: String): Ref {
-        if (!names.contains(name)) throw Error("unknown parser: $name")
-        return Ref(name)
-    }
-
     /// SYNTAX /////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * `!"str" is a shorthand for [ref]`("str")`.
+     * `!"str"` is a shorthand for [Ref]`("str")`.
      */
-    operator fun String.not(): Ref = ref(this)
+    operator fun String.not() = Ref(this)
+
+    /**
+     * `!parser` is a shorthand for [Rec]`(parser)`.
+     */
+    operator fun Parser.not() = Rec(this)
 
     /**
      * +"str" is a shorthand for `Seq(Str("str"), whitespace)`.
