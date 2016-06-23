@@ -19,7 +19,7 @@ data class Seed (
     }
 }
 
-class Seeds: ValueStack<Seed>() {
+class Seeds: StackState<Seed>() {
     /**
      * The state and the snapshot must have the same entries for all positions higher than the
      * current position. Currently, there should only be entries for the current position.

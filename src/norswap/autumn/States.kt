@@ -51,7 +51,7 @@ open class CopyState<C: Copyable>(var get: C): State<C, C> {
  * Two stacks are equivalent only if they are identical,
  * hence [snapshot] == [diff] and [restore] == [merge].
  */
-open class ValueStack<T: Any> (private var stack: LinkList<T> = LinkList())
+open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
 : State<LinkList<T>, LinkList<T>>, Stack<T> by stack
 {
     override fun snapshot() = stack.clone()
