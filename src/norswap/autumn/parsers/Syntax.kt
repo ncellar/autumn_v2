@@ -192,6 +192,12 @@ fun <T: Any> Parser.collect()
 val Parser.collect: Parser
     get() = Collect<Any>(this)
 
+/**
+ * See [RightAssoc].
+ */
+fun <T: Any> Parser.rightAssoc(assoc: (r: T, t: T) -> T)
+    = RightAssoc<T>(this, assoc)
+
 /// With ... ///////////////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -231,5 +237,19 @@ infix fun Parser.over(source: Parser)
  */
 infix fun Parser.over(f: Parser.(Context) -> Result)
     = Bounded(this, f)
+
+/// Sugar //////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Sugar for `this.build { Pair<Any, Any>(get(), get()) }`.
+ */
+val Parser.pair: Parser
+    get() = build { Pair<Any, Any>(get(), get()) }
+
+/**
+ * Sugar for `Seq(left, Seq(*right).repeat.collect)`.
+ */
+fun Binary(left: Parser, vararg right: Parser)
+    = Seq(left, Seq(*right).repeat.collect)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
