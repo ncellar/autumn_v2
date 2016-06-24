@@ -119,9 +119,9 @@ abstract class Grammar
     operator fun String.unaryPlus() = Seq(Str(this), whitespace)
 
     /**
-     * Syntactic sugar for `Seq(buildLeaf(node), whitespace)` (see [buildLeaf]).
+     * Syntactic sugar for `Seq(BuildLeaf(node), whitespace)` (see [Leaf]).
      */
-    fun Parser.leaf(node: (String) -> Any) = Seq(buildLeaf(node), whitespace)
+    fun Parser.atom(node: (String) -> Any): Parser = Seq(Leaf(this, node), whitespace)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 }

@@ -154,10 +154,16 @@ infix fun Parser.build(node: StackAccess.() -> Any)
     = Build(this, node)
 
 /**
- * See [BuildLeaf].
+ * See [Leaf].
  */
-infix fun Parser.buildLeaf(node: (String) -> Any)
-    = BuildLeaf(this, node)
+infix fun Parser.leaf(node: (String) -> Any)
+    = Leaf(this, node)
+
+/**
+ * Sugar for [Leaf]`(this, {it})`
+ */
+val Parser.leaf: Parser
+    get() = Leaf(this, {it})
 
 /**
  * See [BuildMaybe].

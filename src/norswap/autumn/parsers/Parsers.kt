@@ -415,10 +415,11 @@ fun Build (child: Parser, node: StackAccess.() -> Any) = Parser(child) { ctx ->
  * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with
  * the matched text as parameter, then push the returned object onto [Context.stack].
  *
- * Also see [Grammar.leaf].
+ * Also see [Grammar.atom].
  */
-fun BuildLeaf (child: Parser, node: (String) -> Any)
-    = child doWithMatchString { ctx, str -> ctx.stack.push(node(str)) } withDefiner "BuildLeaf"
+fun Leaf(child: Parser, node: (String) -> Any)
+    = child doWithMatchString { ctx, str -> ctx.stack.push(node(str)) } withDefiner "Leaf"
+
 /**
  * Returns a parser wrapping this parser. If the wrapped parser succeeds, tries to pop an item
  * from the result of [stack], returning an instance of [Maybe] depending on the result.
