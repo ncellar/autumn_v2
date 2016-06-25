@@ -83,7 +83,7 @@ open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
  * The properties are naturally respected when using the stack to build an AST
  * in a bottom-up fashion.
  */
-open class BottomUpStack<T: Any>(private var stack: LinkList<T> = LinkList())
+open class SyntaxTreeStack<T: Any>(private var stack: LinkList<T> = LinkList())
 : State<LinkList<T>, LinkList<T>>, Stack<T>
 {
     // Delegate

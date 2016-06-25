@@ -5,7 +5,7 @@ import norswap.violin.stream.*
 
 /**
  * This class gives a parser (the consumer) access to the nodes pushed on [stack] by another
- * parser (the producer). This is specifically designed with [BottomUpStack] in mind,
+ * parser (the producer). This is specifically designed with [SyntaxTreeStack] in mind,
  * typically to manipulate a stack of AST nodes.
  *
  * This works by saving the stack size before invoking the producer. After invoking

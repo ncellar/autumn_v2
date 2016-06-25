@@ -13,7 +13,7 @@ import norswap.violin.stream.*
  * [State] must be passed to [Context]'s constructor in order to be usable.
  *
  * Additionally, [Context] creates a few states automatically: one to handle input positions,
- * [Seeds] (left-recursion handling) and [BottomUpStack] (building a result, such as an AST).
+ * [Seeds] (left-recursion handling) and [SyntaxTreeStack] (building a result, such as an AST).
  *
  * If you require per-parse global data that never changes, or per-parser mutable state that does
  * not impact parsing, use [InertState].
