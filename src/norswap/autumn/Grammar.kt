@@ -77,30 +77,6 @@ abstract class Grammar
         initialized = true
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * This is how a parse is started.
-     *
-     * Parse the given [text] using this grammar's [root], building a context that contains
-     * this grammar's required [states] as well as [moreStates].
-     *
-     * If the parser throws an exception it will be caught and encapsulated in a [DebugFailure]
-     * that will be returned. For panics, the failure is simply returned as such.
-     */
-    fun parse(text: String, vararg moreStates: State<*, *>): Result {
-        initialize()
-        val ctx = Context(text, *(requiredStates().toTypedArray() + moreStates))
-        try {
-            return root.parse(ctx)
-        } catch (e: Carrier) {
-            return e.failure
-        } catch (e: Exception) {
-            return DebugFailure(ctx.pos, { "exception thrown by parser" }, e,
-                ctx.trace.link, ctx.snapshot())
-        }
-    }
-
     /// SYNTAX /////////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -124,4 +100,11 @@ abstract class Grammar
     fun Parser.atom(node: (String) -> Any): Parser = Seq(Leaf(this, node), whitespace)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+}
+
+/**
+ * Creates a grammar from a single parser.
+ */
+class SingletonGrammar (val parser: Parser): Grammar() {
+    override val root = parser
 }

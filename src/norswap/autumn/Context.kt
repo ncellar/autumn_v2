@@ -8,8 +8,13 @@ import kotlin.reflect.KClass
 /**
  * The container for all shared state during a parse.
  */
-class Context (input: String = "", vararg stateArgs: State<*,*>)
+class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*>)
 {
+    /**
+     * The grammar to which this context is associated.
+     */
+    val grammar = grammar
+
     /**
      * The current input position. Update this within parsers as they match input.
      *
@@ -105,11 +110,37 @@ class Context (input: String = "", vararg stateArgs: State<*,*>)
             position.javaClass to position,
             stack.javaClass to stack,
             seeds.javaClass to seeds)
-        stateArgs.forEach { stateMap.put(it.javaClass, it) }
+        grammar.requiredStates().forEach { stateMap.put(it.javaClass, it) }
+        stateArgs               .forEach { stateMap.put(it.javaClass, it) }
         states = stateMap.values.toList()
     }
 
-    // State Retrieval -------------------------------------------------------------------------
+    /// Start Parse --------------------------------------------------------------------------------
+
+    /**
+     * This is how a parse is started.
+     *
+     * Parses [text] using [grammar]'s root ([Grammar.root]).
+     * Parse the given [text] using this grammar's [root], building a context that contains
+     * this grammar's required [states] as well as [moreStates].
+     *
+     * If the parser throws an exception it will be caught and encapsulated in a [DebugFailure]
+     * that will be returned. For panics, the failure is simply returned as such.
+     */
+    fun parse(): Result {
+        grammar.initialize()
+        return try { grammar.root.parse(this) }
+        catch (e: Carrier) { e.failure }
+        catch (e: Throwable) {
+            DebugFailure(
+                pos = pos,
+                msg = { "exception thrown by parser" },
+                throwable = e,
+                parserTrace = trace.link,
+                snapshot = snapshot())
+    }   }
+
+    /// State Retrieval ----------------------------------------------------------------------------
 
     /**
      * Returns the state instance of the class given by the type parameter or by [klass], if any,

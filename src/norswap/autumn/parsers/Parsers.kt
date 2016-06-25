@@ -486,7 +486,7 @@ fun PredicateMsg (msg: Parser.(Context) -> String, pred: Parser.(Context) -> Boo
  */
 fun Bounded (source: Parser, around: Parser) =
     WithMatchString(source) { ctx, str ->
-        tryParse { around.parse(Context(str)) }
+        tryParse { around.parse(Context(str, SingletonGrammar(around))) }
     } withDefiner "Bounded"
 
 /**
@@ -496,7 +496,7 @@ fun Bounded (source: Parser, around: Parser) =
  */
 fun Bounded (child: Parser, f: Parser.(Context) -> Result)
     = WithMatchString(child) { ctx, str ->
-        tryParse { f(Context(str)) }
+        tryParse { f(Context(str, SingletonGrammar(child))) }
     } withDefiner "Bounded"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
