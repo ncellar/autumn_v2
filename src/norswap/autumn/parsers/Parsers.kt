@@ -408,7 +408,7 @@ fun DoWithStack (child: Parser, pop: Boolean = true, f: StackAccess.() -> Unit) 
 fun Build (child: Parser, node: StackAccess.() -> Any) = Parser(child) { ctx ->
     val stack = StackAccess(ctx, this, ctx.stack, true)
     child.parse(ctx)
-        .andDo { stack.prepareAccess() ; stack.node().let { stack.push(it) } }
+        .andDo { stack.prepareAccess() ; stack.push(stack.node()) }
 }
 
 /**
