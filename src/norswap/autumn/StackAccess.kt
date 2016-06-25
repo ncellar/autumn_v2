@@ -55,6 +55,11 @@ class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>, v
         ?: throw Error("No items at index $i (only ${items.size} items available)")
 
     /**
+     * Same as [get] parameterized with [Any].
+     */
+    fun get_(i: Int = cur++): Any = get(i)
+
+    /**
      * Uses [get] to retrieve an instance of `Maybe<T>` ([Maybe]) and returns
      * a corresponding nullable (through [Maybe.invoke]).
      */
