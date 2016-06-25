@@ -240,6 +240,22 @@ infix fun Parser.over(f: Parser.(Context) -> Result)
 
 /// Sugar //////////////////////////////////////////////////////////////////////////////////////////
 
+
+/**
+ * Sugar for CharPred { 'a' <= it && it <= 'z' || 'A' <= it && it <= 'Z' }.
+ */
+val alpha = CharPred { 'a' <= it && it <= 'z' || 'A' <= it && it <= 'Z' }
+
+/**
+ * Sugar for CharPred { 'a' <= it && it <= 'z' || 'A' <= it && it <= 'Z' || '0' <= it && it <= '9' }.
+ */
+val alphaNum = CharPred { 'a' <= it && it <= 'z' || 'A' <= it && it <= 'Z' || '0' <= it && it <= '9' }
+
+/**
+ * Sugar for CharPred { '0' <= it && it <= '9' }.
+ */
+val digit = CharPred { '0' <= it && it <= '9' }
+
 /**
  * Sugar for `this.build { Pair<Any, Any>(get(), get()) }`.
  */
