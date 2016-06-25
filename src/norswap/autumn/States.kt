@@ -59,7 +59,7 @@ open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
     override fun diff(snap: LinkList<T>): LinkList<T> = stack.clone()
     override fun merge(delta: LinkList<T>) { stack = delta.clone() }
     override fun equiv(pos: Int, snap: LinkList<T>) = stack == snap
-    override fun snapshotString(snap: LinkList<T>, ctx: Context) = "$snap"
+    override fun snapshotString(snap: LinkList<T>, ctx: Context) = "<[$snap|"
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,7 +101,7 @@ open class BottomUpStack<T: Any>(private var stack: LinkList<T> = LinkList())
         = delta.stream().each { stack.push(it) }
 
     override fun equiv(pos: Int, snap: LinkList<T>) = true
-    override fun snapshotString(snap: LinkList<T>, ctx: Context) = "$snap"
+    override fun snapshotString(snap: LinkList<T>, ctx: Context) = "<[$snap|"
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
