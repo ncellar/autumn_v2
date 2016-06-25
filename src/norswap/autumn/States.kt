@@ -52,8 +52,15 @@ open class CopyState<C: Copyable>(var get: C): State<C, C> {
  * hence [snapshot] == [diff] and [restore] == [merge].
  */
 open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
-: State<LinkList<T>, LinkList<T>>, Stack<T> by stack
+: State<LinkList<T>, LinkList<T>>, Stack<T>
 {
+    // Delegate
+    override fun stream() = stack.stream()
+    override val size: Int /**/ get() = stack.size
+    override fun push(item: T) = stack.push(item)
+    override fun peek() = stack.peek()
+    override fun pop() = stack.pop()
+
     override fun snapshot() = stack.clone()
     override fun restore(snap: LinkList<T>) { stack = snap.clone() }
     override fun diff(snap: LinkList<T>): LinkList<T> = stack.clone()
@@ -65,7 +72,7 @@ open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * A stack with a special restriction: you can't call pass a snapshot to any operations if you might
+ * A stack with a special restriction: you can't pass a snapshot to any operations if you might
  * have popped items from the stack since the snapshot was taken.
  *
  * Given that a parser does not know how its ancestors will use state operations, this means that
@@ -77,8 +84,15 @@ open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
  * in a bottom-up fashion.
  */
 open class BottomUpStack<T: Any>(private var stack: LinkList<T> = LinkList())
-: State<LinkList<T>, LinkList<T>>, Stack<T> by stack
+: State<LinkList<T>, LinkList<T>>, Stack<T>
 {
+    // Delegate
+    override fun stream() = stack.stream()
+    override val size: Int /**/ get() = stack.size
+    override fun push(item: T) = stack.push(item)
+    override fun peek() = stack.peek()
+    override fun pop() = stack.pop()
+
     fun at(i: Int): T? =
         if (stack.size <= i) null
         else stack.stream().limit(i).last()
