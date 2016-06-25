@@ -406,7 +406,7 @@ fun DoWithStack (child: Parser, pop: Boolean = true, f: StackAccess.() -> Unit) 
  * popped from the stack.
  */
 fun Build (child: Parser, node: StackAccess.() -> Any) = Parser(child) { ctx ->
-    val stack = StackAccess(ctx, this, ctx.stack, false)
+    val stack = StackAccess(ctx, this, ctx.stack, true)
     child.parse(ctx)
         .andDo { stack.prepareAccess() ; stack.node().let { stack.push(it) } }
 }
