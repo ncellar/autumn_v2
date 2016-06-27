@@ -223,15 +223,18 @@ abstract class Parser (vararg val children: Parser)
      * annotated with the name of the parser and the current input input position.
      */
     fun failure(ctx: Context, msg: () -> String): Failure {
-        return plainFailure(ctx) { msg() + " (in ${toStringSimple()} at ${ctx.posStr})" }
+        val pos = ctx.pos
+        return plainFailure(ctx) { msg() + " (in ${toStringSimple()} at ${ctx.posToString(pos)})" }
     }
 
     /**
      * Builds a failure (see [plainFailure]) with a default message including the name of this
      * parser and the current input position.
      */
-    fun failure(ctx: Context)
-        = plainFailure(ctx) { "in ${toStringSimple()} at ${ctx.posStr}" }
+    fun failure(ctx: Context): Failure {
+        val pos = ctx.pos
+        return plainFailure(ctx) { "in ${toStringSimple()} at ${ctx.posToString(pos)}" }
+    }
 
     /**
      * Panic, throwing the given failure, which can be caught with [tryParse] or
