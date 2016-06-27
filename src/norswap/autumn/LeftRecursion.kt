@@ -82,7 +82,7 @@ open class Rec(val child: Parser): Parser(child)
             val res = child.parse(ctx)
             ctx.seeds.pop()
             if (!seed.used) { // triggers on first iteration or never
-                return seed.res
+                return res
             } else if (ctx.pos <= seed.pos) {
                 ctx.restore(snapshot)
                 if (seed.delta != null) ctx.merge(seed.delta!!)
