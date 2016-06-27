@@ -6,7 +6,12 @@ import norswap.autumn.*
 /**
  * [AnyChar]
  */
-val any = AnyChar()
+val any = AnyChar() withDefiner "any"
+
+/**
+ * Matches the end of file (null) character.
+ */
+val eof = Str("\u0000") withDefiner "eof"
 
 /**
  * [CharRange]`(this, c)`
