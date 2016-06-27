@@ -144,6 +144,12 @@ val Parser.beforePrintingState: Parser
 val Parser.printStateAround: Parser
     get() = BeforePrintingState(AfterPrintingState(this))
 
+/**
+ * See [ThenPrintResult].
+ */
+val Parser.thenPrintResult: Parser
+    get() = ThenPrintResult(this)
+
 /// AST Building ///////////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -250,7 +256,6 @@ infix fun Parser.over(f: Parser.(Context) -> Result)
     = Bounded(this, f)
 
 /// Sugar //////////////////////////////////////////////////////////////////////////////////////////
-
 
 /**
  * Sugar for CharPred { 'a' <= it && it <= 'z' || 'A' <= it && it <= 'Z' }.

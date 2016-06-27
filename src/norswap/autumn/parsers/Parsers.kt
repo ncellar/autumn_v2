@@ -332,6 +332,14 @@ fun BeforePrintingState (child: Parser) = Parser(child) { ctx ->
     child.parse(ctx).after { ctx.logStream.println(ctx.stateString()) }
 }
 
+/**
+ * Returns a parser that matches the same as the parser it is called on, but prints its
+ * result afterwards.
+ */
+fun ThenPrintResult (child: Parser) = Parser(child) { ctx ->
+    child.parse(ctx).after { ctx.logStream.println("$this: $it") }
+}
+
 /// With ... ///////////////////////////////////////////////////////////////////////////////////////
 
 /**
