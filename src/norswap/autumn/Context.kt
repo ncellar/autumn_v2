@@ -227,7 +227,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
         }
         else if (result is Failure)
             b += result
-        else if (pos == text.length - 1)
+        else if (pos >= text.length - 1)
             b += "Success (full match)"
         else
             b += "Success up to $posStr (EOF at ${posToString(text.length - 1)})"
