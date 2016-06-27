@@ -50,11 +50,15 @@ open class Result internal constructor ()
     }
 }
 
+/// SUCCESS ////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * The parser invocation was successful: the parser "matched" the input, although it may
  * not have advanced [Context.pos].
  */
 object Success: Result()
+
+/// FAILURE ////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * The parser invocation was unsuccessful: the parser didn't "match" the input.
