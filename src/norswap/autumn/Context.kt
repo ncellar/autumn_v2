@@ -222,8 +222,6 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
             b += "\n"
             if (result.throwable !is StackTrace)
                 b += "Exception message: " + result.throwable.message
-            else
-                b += result
             b += "\n"
             b += result.snapshot.toString(this)
         }
