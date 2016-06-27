@@ -97,8 +97,8 @@ open class Rec(val child: Parser): Parser(child)
  * Creates a reference to the parser named by the string, to be resolved by the [Grammar] to which
  * this parser belongs, before starting a parse (hence these reference are **not** dynamic).
  */
-class Ref (val ref: String): Parser() {
+class Ref (val ref: String, grammar: Grammar): Parser() {
     init { name = "ref($ref)"}
-    lateinit var child: Parser
+    val child by lazy { grammar.recs[ref] ?: throw Exception("Unresolved reference: $ref") }
     override fun _parse_(ctx: Context) = child.parse(ctx)
 }

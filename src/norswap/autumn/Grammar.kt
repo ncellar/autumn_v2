@@ -34,6 +34,11 @@ abstract class Grammar
      */
     abstract val root: Parser
 
+    /**
+     * A map of names to the recursive parser they represent.
+     */
+    val recs = mutableMapOf<String, Rec>()
+
     /// INITIALIZATION /////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -43,12 +48,11 @@ abstract class Grammar
         javaClass.kotlin.memberProperties.stream()
             .filter {
                 !it.returnType.isMarkedNullable
+                    && it.returnType.javaType is Class<*>
                     && Parser::class.java.isAssignableFrom(it.returnType.javaType as Class<*>)
                     && it.name != "tokenParser"
             }
 
-    private val refs = mutableListOf<Ref>()
-    private val recs = mutableMapOf<String, Rec>()
     private var initialized = false
 
     /**
@@ -64,25 +68,17 @@ abstract class Grammar
             // Multiple assignment from the same parser: keep the first name, use the others
             // as aliases.
             parser.name = parser.name ?: it.name
-            if (parser is Ref) refs.add(parser)
             if (parser is Rec) recs.put(it.name, parser)
         }
-        refs.forEach {
-            val rec = recs[it.ref]
-            if (rec == null) throw Exception("Unresolved reference: ${it.ref}")
-            else it.child = rec
-        }
-        recs.clear()
-        refs.clear()
         initialized = true
     }
 
     /// SYNTAX /////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * `!"str"` is a shorthand for [Ref]`("str")`.
+     * `!"str"` is a shorthand for [Ref]`("str", this)`.
      */
-    operator fun String.not() = Ref(this)
+    operator fun String.not() = Ref(this, this@Grammar)
 
     /**
      * `!parser` is a shorthand for [Rec]`(parser)`.
