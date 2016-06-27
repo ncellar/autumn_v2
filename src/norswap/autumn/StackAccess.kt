@@ -27,7 +27,7 @@ class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>, v
 {
     private val size0: Int
     init { size0 = stack.size }
-    private lateinit var items: List<Any>
+    lateinit var items: List<Any>
 
     /**
      * Called before the StackAccess is passed to the user.
