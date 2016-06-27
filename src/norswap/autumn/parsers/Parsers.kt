@@ -1,5 +1,6 @@
 package norswap.autumn.parsers
 import norswap.autumn.*
+import norswap.violin.Maybe
 import norswap.violin.stream.*
 import norswap.violin.utils.after
 
@@ -422,13 +423,10 @@ fun Leaf(child: Parser, node: (String) -> Any)
 
 /**
  * Returns a parser wrapping this parser. If the wrapped parser succeeds, tries to pop an item
- * from the result of [stack], returning an instance of [Maybe] depending on the result.
+ * from [Context.stack], then push an instance of [Maybe] corresponding to the result.
  */
 fun BuildMaybe (child: Parser)
-    = DoWithStack(child) {
-        val maybe: Any? = maybe()
-        if (maybe != null) stack.push(maybe)
-    } withDefiner "BuildMaybe"
+    = DoWithStack(child) { stack.push(Maybe(items.getOrNull(0))) } withDefiner "BuildMaybe"
 
 /**
  * Same as [Opt] but pushes a boolean on the stack depending on whether the parser matched.
