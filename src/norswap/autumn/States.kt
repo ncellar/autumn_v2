@@ -95,7 +95,7 @@ open class SyntaxTreeStack<T: Any>(private var stack: LinkList<T> = LinkList())
 
     fun at(i: Int): T? =
         if (stack.size <= i) null
-        else stack.stream().limit(i).last()
+        else stack.stream().limit(i + 1).last()
 
     override fun snapshot() = stack.clone()
     override fun restore(snap: LinkList<T>) { stack = snap.clone() }
