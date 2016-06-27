@@ -138,6 +138,12 @@ val Parser.afterPrintingState: Parser
 val Parser.beforePrintingState: Parser
     get() = BeforePrintingState(this)
 
+/**
+ * Sugar for `BeforePrintingState(AfterPrintingState(this))`.
+ */
+val Parser.printStateAround: Parser
+    get() = BeforePrintingState(AfterPrintingState(this))
+
 /// AST Building ///////////////////////////////////////////////////////////////////////////////////
 
 /**
