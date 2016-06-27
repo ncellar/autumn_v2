@@ -223,23 +223,24 @@ class Until (
         var cnt = 0
         while (true) {
             var res = until.parse(ctx)
-            if (res is Success) break
+            if (res is Success) {
+                if (matchSome && cnt == 0) {
+                    ctx.restore(initial)
+                    return failure(ctx) { "Until with matchSome did not match any repeatable item" }
+                } else {
+                    if (!matchUntil) ctx.restore(snapshot)
+                    return Success
+                }
+            }
             err = res as Failure
             res = repeat.parse(ctx)
             if (res is Failure) {
                 ctx.restore(initial)
                 return Furthest.max(err, res)
             }
-            ++ cnt
+            ++cnt
             if (!matchUntil) snapshot = ctx.snapshot()
-        }
-        if (matchSome && cnt == 0) {
-            ctx.restore(initial)
-            return failure(ctx) { "UntilSome did not match any repeatable item" }
-        }
-        ctx.restore(snapshot)
-        return Success
-    }
+    }   }
 
     init {
         definer  = "(${if (!matchUntil) "!" else ""}matchUntil, "
