@@ -208,13 +208,12 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
         = logStream.println(msg)
 
     /**
-     * If [debug] is true, prints a parse (using [trace]) to [logStream].
-     *
-     * This is implement by construction of a temporary [DebugFailure] in order to construct the
-     * trace.
+     * If [debug] is true, prints a parse trace (using [trace]) to [logStream].
      */
-    fun logTrace()
-        = logStream.println(DebugFailure(pos, {""}, StackTrace(), trace.link, snapshot()).trace())
+    fun logTrace() {
+        val trace = DebugFailure(pos, {""}, StackTrace(), trace.link, snapshot()).trace()
+        logStream.println("Trace\n" + trace.removeRange(0..trace.indexOf('\n')))
+    }
 
     /**
      * Return a string representation of all states maintained by this context.
