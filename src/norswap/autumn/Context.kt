@@ -202,6 +202,21 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     /// Diagnostic ---------------------------------------------------------------------------------
 
     /**
+     * Syntactic sugar for [logStream]`.println(msg)`.
+     */
+    fun log(msg: Any)
+        = logStream.println(msg)
+
+    /**
+     * If [debug] is true, prints a parse (using [trace]) to [logStream].
+     *
+     * This is implement by construction of a temporary [DebugFailure] in order to construct the
+     * trace.
+     */
+    fun logTrace()
+        = logStream.println(DebugFailure(pos, {""}, StackTrace(), trace.link, snapshot()).trace())
+
+    /**
      * Return a string representation of all states maintained by this context.
      */
     fun stateString(): String
