@@ -12,7 +12,8 @@ data class Seed (
 {
     fun toString(ctx: Context): String {
         val b = StringBuilder()
-        b += "seed at ${ctx.posToString(pos)} (${if (used) "used" else "unused"})\n"
+        b += "seed for $parser at ${ctx.posToString(pos)} "
+        b += "(${if (used) "used" else "unused"})\n"
         b += "  res: $res\n"
         b += "  delta: $delta"
         return b.toString()
