@@ -144,11 +144,37 @@ val Parser.beforePrintingState: Parser
 val Parser.printStateAround: Parser
     get() = BeforePrintingState(AfterPrintingState(this))
 
+
+/**
+ * See [AfterPrintingTrace].
+ */
+val Parser.afterPrintingTrace: Parser
+    get() = AfterPrintingTrace(this)
+
+/**
+ * See [BeforePrintingTrace].
+ */
+val Parser.beforePrintingTrace: Parser
+    get() = BeforePrintingTrace(this)
+
 /**
  * See [ThenPrintResult].
  */
 val Parser.thenPrintResult: Parser
     get() = ThenPrintResult(this)
+
+/**
+ * See [After].
+ */
+fun Parser.after(f: Parser.(Context) -> Unit)
+    = After(this, f)
+
+
+/**
+ * See [Before].
+ */
+fun Parser.then(f: Parser.(Context) -> Unit)
+    = Before(this, f)
 
 /// AST Building ///////////////////////////////////////////////////////////////////////////////////
 

@@ -317,28 +317,54 @@ fun OrRaiseMsg (child: Parser, msg: Parser.(Context) -> String)
 /// Debugging //////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Returns a parser that matches the same as the parser it is called on, but logs
- * the parsing state beforehand.
+ * Acts like [child], but logs the parsing state beforehand.
  */
 fun AfterPrintingState (child: Parser) = Parser(child) { ctx ->
-    ctx.logStream.println(ctx.stateString())
+    ctx.log(ctx.stateString())
     child.parse(ctx)
 }
 
 /**
- * Returns a parser that matches the same as the parser it is called on, but logs
- * the parsing state afterwards.
+ * Acts like [child], but logs the parsing state afterwards.
  */
 fun BeforePrintingState (child: Parser) = Parser(child) { ctx ->
-    child.parse(ctx).after { ctx.logStream.println(ctx.stateString()) }
+    child.parse(ctx).after { ctx.log(ctx.stateString()) }
 }
 
 /**
- * Returns a parser that matches the same as the parser it is called on, but prints its
- * result afterwards.
+ * Acts like [child], but logs the parse trace beforehand.
  */
-fun ThenPrintResult (child: Parser) = Parser(child) { ctx ->
-    child.parse(ctx).after { ctx.logStream.println("$this: $it") }
+fun AfterPrintingTrace (child: Parser) = Parser(child) { ctx ->
+    ctx.logTrace()
+    child.parse(ctx)
+}
+
+/**
+ * Acts like [child], but logs the parse trace afterwards.
+ */
+fun BeforePrintingTrace (child: Parser) = Parser(child) { ctx ->
+    child.parse(ctx).after { ctx.logTrace() }
+}
+
+/**
+ * Acts like [child], but prints its result afterwards.
+ */
+fun ThenPrintResult(child: Parser) = Parser(child) { ctx ->
+    child.parse(ctx).after { ctx.log("$child: $it") }
+}
+
+/**
+ * Acts like [child], but calls [f] beforehand.
+ */
+fun After (child: Parser, f: Parser.(Context) -> Unit) = Parser { ctx ->
+    f(ctx) ; child.parse(ctx)
+}
+
+/**
+ * Acts like [child], but calls [f] afterwards.
+*/
+fun Before (child: Parser, f: Parser.(Context) -> Unit) = Parser { ctx ->
+   child.parse(ctx).after { f(ctx) }
 }
 
 /// With ... ///////////////////////////////////////////////////////////////////////////////////////
