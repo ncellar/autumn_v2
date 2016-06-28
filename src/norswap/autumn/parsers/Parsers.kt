@@ -243,7 +243,7 @@ class Until (
     }   }
 
     init {
-        definer  = "(${if (!matchUntil) "!" else ""}matchUntil, "
+        definer  = "Until(${if (!matchUntil) "!" else ""}matchUntil, "
         definer += "${ if (!matchSome) "!" else ""}matchSome)"
     }
 }
