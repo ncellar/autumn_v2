@@ -41,6 +41,7 @@ open class CopyState<C: Copyable>(var get: C): State<C, C> {
     override fun merge(delta: C) { get = delta.copycast() }
     override fun equiv(pos: Int, snap: C) = this == snap
     override fun snapshotString(snap: C, ctx: Context) = "$get"
+    override fun toString() = "$get"
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,6 +69,7 @@ open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
     override fun merge(delta: LinkList<T>) { stack = delta.clone() }
     override fun equiv(pos: Int, snap: LinkList<T>) = stack == snap
     override fun snapshotString(snap: LinkList<T>, ctx: Context) = "[$snap]-|"
+    override fun toString() = "[$stack]-|"
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,6 +116,7 @@ open class MonotonicStack<T: Any>(private var stack: LinkList<T> = LinkList())
 
     override fun equiv(pos: Int, snap: LinkList<T>) = true
     override fun snapshotString(snap: LinkList<T>, ctx: Context) = "[$snap]-|"
+    override fun toString() = "[$stack]-|"
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
