@@ -494,10 +494,16 @@ fun <T : Any> RightAssoc(child: Parser, assoc: (r: T, t: T) -> T) =
 /// Misc ///////////////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * A parser that always succeeds, after executing [f].
+ */
+fun Perform (f: Parser.(Context) -> Unit)
+    = Parser { ctx -> f(ctx) ; Success }
+
+/**
  * Returns a parser that uses [generator] to generate a parser at parse-time, run it and returns
  * and its result.
  */
-fun Dynamic(generator: Parser.(Context) -> Parser)
+fun Dynamic (generator: Parser.(Context) -> Parser)
     = Parser { ctx -> generator(ctx).parse(ctx) }
 
 /**
