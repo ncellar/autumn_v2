@@ -61,6 +61,10 @@ open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
     override fun peek() = stack.peek()
     override fun pop() = stack.pop()
 
+    fun at(i: Int): T? =
+        if (stack.size <= i) null
+        else stack.stream().limit(i + 1).last()
+
     override fun snapshot() = stack.clone()
     override fun restore(snap: LinkList<T>) { stack = snap.clone() }
     override fun diff(snap: LinkList<T>): LinkList<T> = stack.clone()
