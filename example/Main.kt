@@ -2,7 +2,7 @@ import norswap.autumn.Context
 import norswap.violin.utils.readFile
 
 fun main(args: Array<String>) {
-    val input = readFile("example/example.ply")
+    val input = readFile("example/example2.ply")
     val context = Context(input, Examply)
     context.debug = true
     val result = context.parse()

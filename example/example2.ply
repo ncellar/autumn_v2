@@ -11,6 +11,8 @@ class a
 class c: a
     constructor()
         b()
+        a()
+            val x = b()
 class d
     constructor()
         b()

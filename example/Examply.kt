@@ -93,19 +93,22 @@ object Examply : Grammar()
         body.parse(ctx) andDo { ctx.types.truncate(size) }
     }
 
+    fun inherit(ctx: Context, name: String)
+        = priv(ctx, name).stream().each { ctx.types.push(it) }
+
     fun ClassDef (body: Parser) = Parser { ctx ->
-        // expects a Maybe<SimpleType> for the name of the superclass
         val parent = ctx.stack.at(0) as Maybe<SimpleType>
         val name = ctx.stack.at(1) as String
         val snapshot = ctx.types.snapshot()
-        if (parent is Some<SimpleType>)
-            priv(ctx, parent.value.name).stream().each { ctx.types.push(it) }
+        if (parent is Some<SimpleType>) inherit(ctx, parent.value.name)
         body.parse(ctx) andDo {
             val diff = ctx.types.diff(snapshot)
             ctx.types.restore(snapshot)
             ctx.types.pop()
             ctx.types.push(Type(name, diff))
     }   }
+
+    val anonClassInherit = Perform { ctx -> inherit(ctx, ctx.stack.at(1) as String) }
 
     val classGuard = Seq(iden, Predicate { ctx -> isType(ctx, ctx.stack.peek() as String) }).ahead
 
@@ -243,7 +246,9 @@ object Examply : Grammar()
             call.copy(right = call.right.copy(params = call.right.params + Lambda(get(), get())))
         }
 
-    val blockCtor = Seq(classGuard, iden, paramList, Scoped(decls))
+    val blockCtorBody = Scoped(Seq(anonClassInherit, decls))
+
+    val blockCtor = Seq(classGuard, iden, paramList, blockCtorBody)
         .build { CtorCall(get(), get(), get()) }
 
     val blockCall = Choice(blockCtor, blockMethodCall, blockFunCall)
