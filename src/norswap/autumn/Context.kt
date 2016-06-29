@@ -26,7 +26,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * State to build some result form the parse (typically an AST).
      * A parser must not pop things from the stack that were not pushed by its descendants.
      */
-    val stack = SyntaxTreeStack<Any>()
+    val stack = MonotonicStack<Any>()
 
     /**
      * State to handle left-recursion. Left public in case you want to implement something

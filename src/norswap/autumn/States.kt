@@ -84,7 +84,7 @@ open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
  * In that case, a snapshot taken before a parser invocation is always a prefix of the stack after
  * invocation.
  */
-open class SyntaxTreeStack<T: Any>(private var stack: LinkList<T> = LinkList())
+open class MonotonicStack<T: Any>(private var stack: LinkList<T> = LinkList())
 : State<LinkList<T>, LinkList<T>>, Stack<T>
 {
     // Delegate
