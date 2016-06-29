@@ -1,5 +1,4 @@
 @file:Suppress("UNCHECKED_CAST")
-package norswap.autumn.example
 import norswap.autumn.*
 import norswap.autumn.parsers.*
 import norswap.autumn.utils.*
