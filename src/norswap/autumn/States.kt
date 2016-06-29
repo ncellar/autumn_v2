@@ -76,16 +76,16 @@ open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * A stack with a special restriction: you can't pass a snapshot to any operations if you might
- * have popped items from the stack since the snapshot was taken.
+ * A stack with a special restriction: its [diff] operation assumes that the snapshot is a prefix
+ * of the current stack (items were pushed, but none were popped).
  *
- * Given that a parser does not know how its ancestors will use state operations, this means that
- * a parser can only pop objects that were pushed on the stack by itself and its children.
+ * The prefix checking uses identity checks, so you can't pop an item, push it back and pretend
+ * it's alright. Use [peek] or [at] instead.
  *
- * !! These properties must be enforced by the user.
- *
- * The properties are naturally respected when using the stack to build an AST
- * in a bottom-up fashion.
+ * The restriction is naturally respected when using the stack to build a syntax tree in the
+ * usual fashion: each parser only pops items that were pushed by its descendants.
+ * In that case, a snapshot taken before a parser invocation is always a prefix of the stack after
+ * invocation.
  */
 open class SyntaxTreeStack<T: Any>(private var stack: LinkList<T> = LinkList())
 : State<LinkList<T>, LinkList<T>>, Stack<T>
