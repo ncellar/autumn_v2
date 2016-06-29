@@ -121,6 +121,9 @@ open class MonotonicStack<T: Any>(private var stack: LinkList<T> = LinkList())
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * TODO To be replaced with an HAMT-based implementation, once I finish porting it.
+ */
 open class MapState<K: Any, V: Any>(private var map: MutableMap<K, V> = HashMap())
 : State<Map<K, V>, Map<K, V>>, MutableMap<K, V> by map
 {
