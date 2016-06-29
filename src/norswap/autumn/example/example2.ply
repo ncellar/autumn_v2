@@ -1,0 +1,16 @@
+import my.package:k
+class a
+    class b
+    constructor()
+        b()
+        k()
+        class l
+        l()
+    fun f()
+        l()
+class c: a
+    constructor()
+        b()
+class d
+    constructor()
+        b()
