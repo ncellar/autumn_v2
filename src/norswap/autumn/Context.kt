@@ -1,3 +1,4 @@
+@file:Suppress("CanBePrimaryConstructorProperty")
 package norswap.autumn
 import norswap.violin.link.LinkList
 import norswap.violin.stream.*
