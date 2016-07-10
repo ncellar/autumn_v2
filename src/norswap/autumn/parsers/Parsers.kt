@@ -454,7 +454,7 @@ fun Build (child: Parser, node: StackAccess.() -> Any) = Parser(child) { ctx ->
  *
  * Also see [Grammar.atom].
  */
-fun Leaf(child: Parser, node: (String) -> Any)
+fun Leaf (child: Parser, node: (String) -> Any)
     = child doWithMatchString { ctx, str -> ctx.stack.push(node(str)) } withDefiner "Leaf"
 
 /**

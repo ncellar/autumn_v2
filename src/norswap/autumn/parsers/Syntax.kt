@@ -75,7 +75,7 @@ fun Parser.repeat(n: Int)
  * [Around]`(this, inside)`
  */
 infix fun Parser.around(inside: Parser)
-    = Opt(Around(this, inside))
+    = Around(this, inside)
 
 /**
  * [Around1]`(this, inside)`
