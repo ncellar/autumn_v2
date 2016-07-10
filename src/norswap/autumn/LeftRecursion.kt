@@ -31,7 +31,8 @@ class Seeds: StackState<Seed>() {
 
     fun get(pos: Int, parser: Parser): Seed?
         = stream()  .takeWhile { it.pos >= pos }
-                    .first { it.parser == parser }
+                    .filter { it.parser == parser }
+                    .next()
 
     override fun snapshotString(snap: LinkList<Seed>, ctx: Context): String {
         val b = StringBuilder()

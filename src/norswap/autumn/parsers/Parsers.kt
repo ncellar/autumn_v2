@@ -129,7 +129,8 @@ fun Seq (vararg children: Parser) = Parser(*children) { ctx ->
     val snapshot = ctx.snapshot()
     children.stream()
         .map { it.parse(ctx) }
-        .first { it is Failure }
+        .filter { it is Failure }
+        .next()
         ?.apply { ctx.restore(snapshot) }
         ?: Success
 }
