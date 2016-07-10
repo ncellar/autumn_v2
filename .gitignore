@@ -6,3 +6,4 @@
 /.idea/uiDesigner.xml
 /srclib/**/.idea
 /srclib/**/*.iml
+/local.mk
