@@ -35,7 +35,7 @@ class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>, v
     fun prepareAccess() {
         items = stack.stream()
             .limit(stack.size - size0)
-            .apply { if (pop) stack.pop() }
+            .after { if (pop) stack.pop() }
             .list()
             .asReversed()
     }
