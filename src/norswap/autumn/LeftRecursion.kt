@@ -64,7 +64,7 @@ class Seeds: StackState<Seed>() {
  * distinguish between left-recursive and other recursive parsers, hence [Grammar] will require
  * this to be wrapped around all recursive parsers.
  */
-open class Rec(val child: Parser): Parser(child)
+open class Rec (val child: Parser): Parser(child)
 {
     override fun _parse_(ctx: Context): Result {
         // recursive Ref#parse call

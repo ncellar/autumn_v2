@@ -70,6 +70,10 @@ abstract class Grammar
             parser.name = parser.name ?: it.name
             if (parser is Rec) recs.put(it.name, parser)
         }
+        recs.values.forEach {
+            if (it.child.name == null)
+                it.child.name = it.name + " (rec target)"
+        }
         initialized = true
     }
 
