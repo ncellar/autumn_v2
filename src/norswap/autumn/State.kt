@@ -45,7 +45,7 @@ interface State<Snapshot: Any, Delta: Any>
     fun merge(delta: Delta)
 
     /**
-     * Indicates if the curent state has the same *consequences* as the state captured by
+     * Indicates if the current state has the same *consequences* as the state captured by
      * [snap] at position [pos].
      *
      * Two states have the same consequences at a position if calling
@@ -73,8 +73,9 @@ interface State<Snapshot: Any, Delta: Any>
 /**
  * Like [State.restore] but coerces [snap] to the proper type.
  */
-fun <Snapshot: Any> State<Snapshot, *>.restore(snap: Any)
-{ restore(snap.cast()) }
+fun <Snapshot: Any> State<Snapshot, *>.restore(snap: Any) {
+    restore(snap.cast())
+}
 
 /**
  * Like [State.diff] but coerces [snap] to the proper type.
@@ -85,8 +86,9 @@ fun <Snapshot: Any, Delta: Any> State<Snapshot, Delta>.diff(snap: Any): Delta =
 /**
  * Like [State.merge] but coerces [delta] to the proper type.
  */
-fun <Delta: Any> State<*, Delta>.merge(delta: Any)
-{ merge(delta.cast()) }
+fun <Delta: Any> State<*, Delta>.merge(delta: Any) {
+    merge(delta.cast())
+}
 
 /**
  * Like [State.equiv] but coerces [snap] to the proper type.
