@@ -42,6 +42,8 @@ import norswap.violin.utils.after
  * revert all changes it and its descendants made to the state. This can be achieved using
  * [Context.snapshot] and [Context.restore] or the [transact] shorthand.
  *
+ * A parser must not be stateful: maintain your state within in a [State] registered with [Context].
+ *
  * ## Panics
  *
  * A parser can exit through a panic ([panic]) which throws an exception, so you shouldn't
