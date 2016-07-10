@@ -136,8 +136,8 @@ object Examply : Grammar()
     val paramDecls = (typedIden around +",")
         .collect<TypedIdentifier>()
 
-    val paramArrow = Seq(paramDecls, +"->").opt
-        .build { items.getOrNull(0) ?: emptyList<TypedIdentifier>() }
+    val paramArrow = Seq(paramDecls, +"->").opt.maybe
+        .build { maybe() ?: emptyList<TypedIdentifier>() }
 
     /// --- Expressions
 
@@ -263,8 +263,8 @@ object Examply : Grammar()
 
     // --- Classes
 
-    val classBody = ClassDef(decls.opt)
-        .build { items.getOrNull(0) ?: emptyList<Decl>() }
+    val classBody = ClassDef(decls.opt.maybe)
+        .build { maybe() ?: emptyList<Decl>() }
 
     val `class` = Seq(+"class", NewType(iden), Seq(+":", simpleType).opt.maybe, classBody)
         .build { Class(get(), maybe(), get()) }
