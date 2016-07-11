@@ -95,9 +95,15 @@ abstract class Grammar
     operator fun String.unaryPlus() = Seq(Str(this), whitespace)
 
     /**
-     * Syntactic sugar for `Seq(BuildLeaf(node), whitespace)` (see [Leaf]).
+     * Syntactic sugar for `Seq(Leaf(this, node), whitespace)` (see [Leaf]).
      */
     fun Parser.atom(node: (String) -> Any): Parser = Seq(Leaf(this, node), whitespace)
+
+    /**
+     * Syntactic sugar for `Seq(this, whitespace)`.
+     */
+    val Parser.wp: Parser
+        get() = Seq(this, whitespace)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 }
