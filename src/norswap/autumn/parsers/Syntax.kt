@@ -1,5 +1,6 @@
 package norswap.autumn.parsers
 import norswap.autumn.*
+import norswap.violin.utils.after
 
 /// Parsing Characters /////////////////////////////////////////////////////////////////////////////
 
@@ -7,6 +8,11 @@ import norswap.autumn.*
  * [AnyChar]
  */
 val any = AnyChar() withDefiner "any"
+
+/**
+ * The end-of-file (null) character.
+ */
+val eofChar = '\u0000'
 
 /**
  * Matches the end of file (null) character.
@@ -309,5 +315,64 @@ val Parser.pair: Parser
  */
 fun Binary(left: Parser, vararg right: Parser)
     = Seq(left, Seq(*right).repeat.collect)
+
+/// Builders ///////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Class enabling the `(x / y / z).choice` sugar for `Choice(x, y, z)`.
+ */
+data class ChoiceBuilder (val list: MutableList<Parser>)
+{
+    /**
+     * Turn this builder into a [Choice] instance.
+     */
+    val choice: Parser
+        get() = Choice(*list.toTypedArray())
+
+    /**
+     * Turn this builder into a [Longest] instance.
+     */
+    val longest: Parser
+        get() = Longest(*list.toTypedArray())
+
+    operator fun div (right: Parser)
+        = this.after { list.add(right) }
+
+    operator fun div (right: ChoiceBuilder)
+        = this.after { list.addAll(right.list) }
+
+}
+
+/**
+ * See [ChoiceBuilder].
+ */
+operator fun Parser.div (right: Parser)
+    = ChoiceBuilder(mutableListOf(this, right))
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Class enabling the `(x .. y .. z).seq` sugar for `Seq(x, y, z)`.
+ */
+data class SeqBuilder (val list: MutableList<Parser>)
+{
+    /**
+     * Turn this builder into a [Seq] instance.
+     */
+    val seq: Parser
+        get() = Seq(*list.toTypedArray())
+
+    operator fun rangeTo (right: Parser)
+        = this.after { list.add(right) }
+
+    operator fun rangeTo (right: SeqBuilder)
+        = this.after { list.addAll(right.list) }
+}
+
+/**
+ * See [SeqBuilder].
+ */
+operator fun Parser.rangeTo (right: Parser)
+     = SeqBuilder(mutableListOf(this, right))
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
