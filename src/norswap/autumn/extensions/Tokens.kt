@@ -82,8 +82,8 @@ abstract class TokenGrammar: Grammar()
         val msg = "Could not match any token"
         val array = typedTokenParsers.toTypedArray()
 
-        tokenParser = when(tokenDisambiguation) {
-            ORDERING -> Choice  (*array).orRaiseMsg { msg }
+        tokenParser = when (tokenDisambiguation) {
+            ORDERING      -> Choice  (*array).orRaiseMsg { msg }
             LONGEST_MATCH -> Longest (*array).orRaiseMsg { msg }
         }   }
 
@@ -98,7 +98,7 @@ abstract class TokenGrammar: Grammar()
         /** See [typedTokenParsers]. */
         typedTokenParsers.add(Parser(this) { ctx ->
             val pos = ctx.pos
-            this.parse(ctx).andDo {
+            this.parse(ctx) andDo {
                 ctx.stack.push(
                     Token(type, pos, ctx.pos, value(ctx.text.substring(pos, ctx.pos))))
                 whitespace.parse(ctx)
@@ -122,8 +122,20 @@ abstract class TokenGrammar: Grammar()
             val token = ctx.stack.peek() as Token<*>?
             cache?.put(pos, TokenCacheEntry(result, ctx.pos, token))
             return@body succeed(ctx) { token?.type == type }
-        }
     }   }
+
+    /**
+     * Sugar for `this.token { it }`.
+     */
+    val Parser.token: Parser
+        get() = token { it }
+
+    /**
+     * Sugar for `Str(this).token { it }`.
+     */
+    val String.keyword: Parser
+        get() = Str(this).token { it }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
