@@ -100,7 +100,7 @@ abstract class TokenGrammar: Grammar()
         /** See [typedTokenParsers]. */
         typedTokenParsers.add(Parser(this) { ctx ->
             val pos = ctx.pos
-            this.parse(ctx) andDo {
+            this@token.parse(ctx) andDo {
                 ctx.stack.push(
                     Token(type, pos, ctx.pos, value(ctx.text.substring(pos, ctx.pos))))
                 whitespace.parse(ctx)
@@ -123,7 +123,13 @@ abstract class TokenGrammar: Grammar()
             val result = tokenParser.parse(ctx)
             val token = ctx.stack.peek() as Token<*>?
             cache?.put(pos, TokenCacheEntry(result, ctx.pos, token))
-            return@body succeed(ctx) { token?.type == type }
+            if (token?.type == type)
+                Success
+            else {
+                ctx.stack.pop()
+                ctx.pos = pos
+                failure(ctx)
+            }
     }   }
 
     /**
