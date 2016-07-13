@@ -348,15 +348,32 @@ data class ChoiceBuilder (val list: MutableList<Parser>)
     operator fun div (right: Parser)
         = this.after { list.add(right) }
 
+    /**
+     * Synonymous to [div], but used to emphasize ordering.
+     */
+    operator fun mod (right: Parser)
+        = this.after { list.add(right) }
+
     operator fun div (right: ChoiceBuilder)
         = this.after { list.addAll(right.list) }
 
+    /**
+     * Synonymous to [div], but used to emphasize ordering.
+     */
+    operator fun mod (right: ChoiceBuilder)
+        = this.after { list.addAll(right.list) }
 }
 
 /**
  * See [ChoiceBuilder].
  */
 operator fun Parser.div (right: Parser)
+    = ChoiceBuilder(mutableListOf(this, right))
+
+/**
+ * See [ChoiceBuilder].
+ */
+operator fun Parser.mod (right: Parser)
     = ChoiceBuilder(mutableListOf(this, right))
 
 // -------------------------------------------------------------------------------------------------
