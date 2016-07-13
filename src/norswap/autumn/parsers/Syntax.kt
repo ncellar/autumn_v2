@@ -22,7 +22,7 @@ val eof = Str("\u0000") withDefiner "eof"
 /**
  * [CharRange]`(this, c)`
  */
-infix fun Char.through(c: Char)
+infix fun Char.to(c: Char)
     = CharRange(this, c)
 
 /**
