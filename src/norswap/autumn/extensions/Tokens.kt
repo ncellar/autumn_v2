@@ -90,6 +90,8 @@ abstract class TokenGrammar: Grammar()
     /**
      * Returns a parser for a token whose syntax is defined by this parser and whose value
      * is built by [value], a function that takes the string matched by this parser as parameter.
+     *
+     * !! Excepted for the position, no state manipulation is allowed inside a token parser.
      */
     fun <T: Any> Parser.token(value: (String) -> T): Parser
     {
