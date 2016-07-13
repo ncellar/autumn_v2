@@ -305,6 +305,16 @@ val alphaNum = CharPred { 'a' <= it && it <= 'z' || 'A' <= it && it <= 'Z' || '0
 val digit = CharPred { '0' <= it && it <= '9' }
 
 /**
+ * Sugar for CharPred { 'a' <= it && it <= 'f' || 'A' <= it && it <= 'F' || '0' <= it && it <= '9' }.
+ */
+val hexDigit = CharPred { 'a' <= it && it <= 'f' || 'A' <= it && it <= 'F' || '0' <= it && it <= '9' }
+
+/**
+ * Sugar for CharPred { '0' <= it && it <= '7' }.
+ */
+val octalDigit = CharPred { '0' <= it && it <= '7' }
+
+/**
  * Sugar for `this.build { Pair<Any, Any>(get(), get()) }`.
  */
 val Parser.pair: Parser
