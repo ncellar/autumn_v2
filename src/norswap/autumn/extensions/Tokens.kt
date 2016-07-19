@@ -11,10 +11,18 @@ import norswap.autumn.extensions.TokenGrammar.TokenDisambiguation.*
  * Holds a type identifier for the token, its location within the input, as well as its derived
  * value (as determined by [Grammar.token]).
  */
-data class Token<T: Any> (val type: Int, val start: Int, val end: Int, val value: T) {
-    fun toString(ctx: Context)
-        = "Token<${value.javaClass.simpleName}> (${ctx.rangeToString(start, end)}): $value"
+data class Token<T: Any> (val type: Int, val start: Int, val end: Int, val value: T?)
+{
+    override fun toString()
+        = "Token<${value?.javaClass?.simpleName ?: "Nothing"}>"
+
+    fun toStringWithPos (ctx: Context)
+        = "${toString()} (${ctx.rangeToString(start, end)}): $value"
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+val NO_RESULT = Token<Nothing>(-1, -1, -1, null)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -57,14 +65,14 @@ abstract class TokenGrammar: Grammar()
      * If multiple token types can match at an input position, how to select the correct
      * token type.
      */
-    open val tokenDisambiguation = ORDERING;
+    open val tokenDisambiguation = ORDERING
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * This it the parser that matches a single token (of any kind).
      */
-    private lateinit var tokenParser: Parser
+    internal lateinit var tokenParser: Parser
 
     /**
      * The token type ID for the next token to be registered.
@@ -72,15 +80,19 @@ abstract class TokenGrammar: Grammar()
     private var nextTokenType = 0
 
     /**
-     * A list of parsers that parse a specific type of token, and if successful push the token
-     * onto [Context.stack].
+     * List of [TokenTypeParser] for each registered token, indexed by token type ID.
      */
-    private var typedTokenParsers = mutableListOf<Parser>()
+    private var typeParsers = mutableListOf<TokenTypeParser>()
+
+    /**
+     * List of [TokenCheckParser] for each registered token, indexed by token type ID.
+     */
+    internal var checkParsers = mutableListOf<TokenCheckParser>()
 
     override fun initialize() {
         super.initialize()
         val msg = "Could not match any token"
-        val array = typedTokenParsers.toTypedArray()
+        val array = typeParsers.toTypedArray()
 
         tokenParser = when (tokenDisambiguation) {
             ORDERING      -> Choice  (*array).orRaiseMsg { msg }
@@ -93,44 +105,19 @@ abstract class TokenGrammar: Grammar()
      *
      * !! Excepted for the position, no state manipulation is allowed inside a token parser.
      */
-    fun <T: Any> Parser.token(value: (String) -> T): Parser
+    fun <T: Any> Parser.token(info: Boolean = false, value: (String) -> T?): Parser
     {
         val type = nextTokenType ++
+        val typeParser = TokenTypeParser(type, this, value, this@TokenGrammar)
+        val checkParser = TokenCheckParser(type, info, this@TokenGrammar)
+        typeParsers.add(typeParser)
+        checkParsers.add(checkParser)
+        return checkParser
+    }
 
-        /** See [typedTokenParsers]. */
-        typedTokenParsers.add(Parser(this) { ctx ->
-            val pos = ctx.pos
-            this@token.parse(ctx) andDo {
-                ctx.stack.push(
-                    Token(type, pos, ctx.pos, value(ctx.text.substring(pos, ctx.pos))))
-                whitespace.parse(ctx)
-            }
-        })
-
-        /**
-         * Returns the requested parser, which will match the next token (using the [TokenCache]
-         * if available, or with [tokenParser]), then ensure the matched token is of
-         * the requested type.
-         */
-        return Parser body@ { ctx ->
-            val pos = ctx.pos
-            val cache: TokenCache? = ctx.state_()
-            cache?.get(pos)?.let {
-                ctx.pos = it.end
-                if (it.token != null) ctx.stack.push(it.token)
-                return@body it.result
-            }
-            val result = tokenParser.parse(ctx)
-            val token = ctx.stack.peek() as Token<*>?
-            cache?.put(pos, TokenCacheEntry(result, ctx.pos, token))
-            if (token?.type == type)
-                Success
-            else {
-                ctx.stack.pop()
-                ctx.pos = pos
-                failure(ctx)
-            }
-    }   }
+    fun test() {
+        Str("").token { it }
+    }
 
     /**
      * Sugar for `this.token { it }`.
@@ -139,25 +126,104 @@ abstract class TokenGrammar: Grammar()
         get() = token { it }
 
     /**
-     * Sugar for `Str(this).token { it }`.
+     * Sugar for `Str(this).token { null }`.
      */
     val String.keyword: Parser
+        get() = Str(this).token { null }
+
+    /**
+     * Sugar for `Str(this).token { it }`.
+     */
+    val String.token: Parser
         get() = Str(this).token { it }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-data class TokenCacheEntry(
-    val result: Result,
-    val end: Int,
-    val token: Token<*>?)
+/**
+ * Calls [target], and if successful, uses [value] to generate a value from the matched string,
+ * wraps it into a [Token], and pushes this token onto [Context.stack].
+ */
+class TokenTypeParser (
+    val type: Int,
+    val target: Parser,
+    val value: (String) -> Any?,
+    val grammar: Grammar)
+: Parser(target)
+{
+    override fun _parse_(ctx: Context): Result {
+        val pos = ctx.pos
+        val result = target.parse(ctx)
+        if (result is Success) {
+            val token = Token(type, pos, ctx.pos, value(ctx.textFrom(pos)))
+            ctx.stack.push(token)
+            grammar.whitespace.parse(ctx)
+        }
+        return result
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Attempts to match a token, succeeding if the matched token is of type [type]. If successful,
+ * pushes the [Token] onto [Context.stack] if [info], else pushes only its value (if present).
+ */
+class TokenCheckParser (val type: Int, val info: Boolean, val grammar: TokenGrammar): Parser()
+{
+    fun result(pos: Int, ctx: Context, token: Token<*>): Result
+    {
+        if (token === NO_RESULT) {
+            ctx.pos = pos
+            return failure(ctx) { "Could not match any token" }
+        }
+
+        if (token.type != type) {
+            ctx.pos = pos
+            return failure(ctx) {
+                val expected = this.name ?: type.toString()
+                val actual = grammar.checkParsers[token.type].name ?: token.type.toString()
+                "Expected token type [$expected] but got [$actual] instead"
+            }
+        }
+
+        if (info)
+            ctx.stack.push(token)
+        else if (token.value != null)
+            ctx.stack.push(token.value)
+
+        ctx.pos = token.end
+        return Success
+    }
+
+    override fun _parse_(ctx: Context): Result
+    {
+        val pos = ctx.pos
+        val cache: TokenCache? = ctx.state_()
+
+        // use cached result if possible
+        cache?.get(pos)?.let {
+            return result(pos, ctx, it)
+        }
+
+        val result = grammar.tokenParser.parse(ctx)
+        val token =
+            if (result is Success) ctx.stack.pop() as Token<*>
+            else NO_RESULT
+
+        cache?.put(pos, token)
+        return result(pos, ctx, token)
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Memoizes matched tokens by input position.
  * This is optional and must be added to the [Context] to be used.
  */
-class TokenCache(val map: MutableMap<Int, TokenCacheEntry> = mutableMapOf())
-: InertState<TokenCache>, MutableMap<Int, TokenCacheEntry> by map
+class TokenCache(val map: MutableMap<Int, Token<*>> = mutableMapOf())
+: InertState<TokenCache>, MutableMap<Int, Token<*>> by map
 {
     override fun snapshotString(snap: TokenCache, ctx: Context): String {
         val b = StringBuilder()
@@ -167,11 +233,11 @@ class TokenCache(val map: MutableMap<Int, TokenCacheEntry> = mutableMapOf())
             .apply { sortBy { it.key } }
             .stream()
             .each {
-                val (k, v) = it
-                if (v.result is Success)
-                    b += "\n  from ${ctx.rangeToString(k, v.end)}: ${v.token.toString()}"
+                val (pos, tok) = it
+                if (tok !== NO_RESULT)
+                    b += "\n  from ${ctx.rangeToString(pos, tok.end)}: $tok"
                 else
-                    b += "\n  at ${ctx.posToString(k)}: ${v.result.toString()}"
+                    b += "\n  at ${ctx.posToString(pos)}: no token"
             }
         if (!map.isEmpty()) b += "\n"
         b += "}"
