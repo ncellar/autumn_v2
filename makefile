@@ -11,6 +11,7 @@ JCOMMA:="http://central.maven.org/maven2/com/beust/jcommander/$(JCOMMA_VER)/jcom
 DOKKA:="https://github.com/Kotlin/dokka/releases/download/$(DOKKA_VER)/dokka-fatjar.jar"
 KOTLIN:="https://github.com/JetBrains/kotlin/releases/download/v$(KOTLIN_VER)/kotlin-compiler-$(KOTLIN_VER).zip"
 VIOLIN:="https://dl.bintray.com/norswap/maven/com/norswap/violin/$(VIOLIN_VER)/violin-$(VIOLIN_VER).jar"
+VIOLIN_SRC:="https://dl.bintray.com/norswap/maven/com/norswap/violin/$(VIOLIN_VER)/violin-$(VIOLIN_VER)-sources.jar"
 
 ifeq ($(shell if [ -d kotlinc ]; then echo "yes"; fi),yes)
 	KOTLINC:=kotlinc/bin/kotlinc
@@ -61,6 +62,7 @@ cleankotlin:
 deps:
 	mkdir -p lib
 	curl -L $(VIOLIN)     > lib/violin.jar
+	curl -L $(VIOLIN_SRC) > lib/violin-sources.jar
 	curl -L $(DOKKA)	  > lib/dokka.jar
 	curl -L $(TESTNG)	  > lib/testng.jar
 	curl -L $(JCOMMA)     > lib/jcommander.jar
