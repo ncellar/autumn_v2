@@ -65,9 +65,15 @@ abstract class Grammar
         if (initialized) return
         parsers().each {
             val parser = it.call(this) as Parser
-            // Multiple assignment from the same parser: keep the first name, use the others
-            // as aliases.
+            if (parser.name != null) {
+                val warning
+                    = "Warning: trying to assign a new name (${it.name}) to an already " +
+                    "named parser (${parser.name}). Current name will be retained. " +
+                    "Use `Alias` to make an alias."
+                System.err.println(warning)
+            }
             parser.name = parser.name ?: it.name
+            // Still register the new name! It just won't be displayed when printing the parser.
             if (parser is Rec) recs.put(it.name, parser)
         }
         recs.values.forEach {
