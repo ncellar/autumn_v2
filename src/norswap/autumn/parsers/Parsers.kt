@@ -75,6 +75,7 @@ fun Choice (vararg children: Parser) = Parser(*children) { ctx ->
 
 /**
  * Matches the parser in [children] which successfully matches the most input, else fails.
+ * If there is a tie (two parsers match the same amount of input), the first one wins.
  */
 fun Longest (vararg children: Parser) = Parser(*children) body@ { ctx ->
     val initial = ctx.snapshot()
