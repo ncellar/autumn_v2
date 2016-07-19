@@ -327,6 +327,12 @@ val Parser.pair: Parser
     get() = build { Pair<Any, Any>(get(), get()) }
 
 /**
+ * Sugar for `Seq(left, right.repeat.collect)`.
+ */
+fun Binary(left: Parser, right: Parser)
+    = Seq(left, right.repeat.collect)
+
+/**
  * Sugar for `Seq(left, Seq(*right).repeat.collect)`.
  */
 fun Binary(left: Parser, vararg right: Parser)
