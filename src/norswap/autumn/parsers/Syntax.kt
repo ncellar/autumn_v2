@@ -385,8 +385,20 @@ operator fun Parser.div (right: Parser)
 /**
  * See [ChoiceBuilder].
  */
+operator fun Parser.div (right: ChoiceBuilder)
+    = ChoiceBuilder(mutableListOf(this)).div(right)
+
+/**
+ * See [ChoiceBuilder].
+ */
 operator fun Parser.mod (right: Parser)
     = ChoiceBuilder(mutableListOf(this, right))
+
+/**
+ * See [ChoiceBuilder].
+ */
+operator fun Parser.mod (right: ChoiceBuilder)
+    = ChoiceBuilder(mutableListOf(this)).mod(right)
 
 // -------------------------------------------------------------------------------------------------
 
@@ -413,5 +425,11 @@ data class SeqBuilder (val list: MutableList<Parser>)
  */
 operator fun Parser.rangeTo (right: Parser)
      = SeqBuilder(mutableListOf(this, right))
+
+/**
+ * See [SeqBuilder].
+ */
+operator fun Parser.rangeTo (right: SeqBuilder)
+    = SeqBuilder(mutableListOf(this)).rangeTo(right)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
