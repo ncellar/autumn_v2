@@ -60,11 +60,18 @@ class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>, v
     fun get_(i: Int = cur++): Any = get(i)
 
     /**
-     * Uses [get] to retrieve an instance of `Maybe<T>` ([Maybe]) and returns
+     * Uses [get] to retrieve an instance of [Maybe]`<T>` and returns
      * a corresponding nullable (through [Maybe.invoke]).
      */
     fun <T: Any> maybe(pos: Int = cur++): T?
         = get<Maybe<T>>(pos)()
+
+    /**
+     * Uses [get] to retrieve an instance of [Maybe]`<List<T>>` and returns
+     * the contained list if there is one, or an empty list instead.
+     */
+    fun <T: Any> list(pos: Int = cur++): List<T>
+         = get<Maybe<List<T>>>(pos)() ?: listOf<T>()
 
     /**
      * Returns the remaining items as a list of the specified type.
