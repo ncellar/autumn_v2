@@ -276,6 +276,12 @@ infix fun Parser.doWithMatchString(f: Parser.(Context, String) -> Unit)
 /// Misc ///////////////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * [Alias]`(this)`
+ */
+val Parser.alias: Parser
+    get() = Alias(this)
+
+/**
  * [Bounded]`(this, source)`
  */
 infix fun Parser.over(source: Parser)

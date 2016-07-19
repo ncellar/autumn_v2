@@ -496,6 +496,12 @@ fun <T : Any> RightAssoc(child: Parser, assoc: (r: T, t: T) -> T) =
 /// Misc ///////////////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * Delegates the parsing to [child]. Use to create an alias of [child] with a different name.
+ */
+fun Alias (child: Parser)
+    = Parser (child) { child.parse(it) }
+
+/**
  * A parser that always succeeds, after executing [f].
  */
 fun Perform (f: Parser.(Context) -> Unit)
