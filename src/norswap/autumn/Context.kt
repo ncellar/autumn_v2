@@ -236,12 +236,6 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
             // TODO handle stack overflows
             b += result.trace()
             b += "\n"
-            if (result.throwable !is StackTrace)
-                if (result.throwable.message != null)
-                    b += "Exception message: " + result.throwable.message
-                else
-                    b += "Exception: " + result.throwable
-            b += "\n"
             b += result.snapshot.toString(this)
         }
         else if (result is Failure)
