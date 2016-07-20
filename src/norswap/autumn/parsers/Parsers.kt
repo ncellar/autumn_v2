@@ -83,16 +83,21 @@ fun Choice (vararg children: Parser) = Parser(*children) { ctx ->
  * If there is a tie (two parsers match the same amount of input), the first one wins.
  */
 fun Longest (vararg children: Parser) = Parser(*children) body@ { ctx ->
+
     val initial = ctx.snapshot()
     var bestSnapshot = initial
     var bestPos = -1
     var furthestFailure: Failure? = null
-    for (child in children) {
+
+    for (child in children)
+    {
         val result = child.parse(ctx)
-        if (ctx.pos > bestPos) {
+
+        if (result is Success && ctx.pos > bestPos) {
             bestPos = ctx.pos
             bestSnapshot = ctx.snapshot()
         }
+
         if (result !is Failure)
             ctx.restore(initial)
         else if (bestPos == -1)
@@ -101,8 +106,11 @@ fun Longest (vararg children: Parser) = Parser(*children) body@ { ctx ->
 
     if (bestPos > -1) {
         ctx.restore(bestSnapshot) ; Success
-    } else if (furthestFailure != null) furthestFailure
-    else failure(ctx) { "empty longest-match choice: ${toStringSimple()}" }
+    }
+    else if (furthestFailure != null)
+        furthestFailure
+    else
+        failure(ctx) { "empty longest-match choice: ${toStringSimple()}" }
 }
 
 /// Lookahead //////////////////////////////////////////////////////////////////////////////////////
