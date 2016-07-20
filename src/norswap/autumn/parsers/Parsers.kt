@@ -55,9 +55,14 @@ fun CharSet (vararg chars: Char) = Parser { ctx ->
 /**
  * Matches the string [str], else fails.
  */
-fun Str (str: String) = Parser { ctx ->
-    succeed(ctx) { ctx.text.regionMatches(ctx.pos, str, 0, str.length) }
-        .andDo { ctx.pos += str.length }
+class Str (val str: String): Parser()
+{
+    override fun _parse_(ctx: Context) =
+        succeed(ctx) { ctx.text.regionMatches(ctx.pos, str, 0, str.length) }
+            .andDo { ctx.pos += str.length }
+
+    override fun toString() =
+        "Str($str)"
 }
 
 /// Choices ////////////////////////////////////////////////////////////////////////////////////////
