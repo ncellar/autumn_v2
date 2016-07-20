@@ -1,5 +1,10 @@
 package norswap.autumn
+import norswap.autumn.utils.isMethod
+import norswap.autumn.utils.clickableString
 import norswap.violin.utils.after
+import norswap.autumn.utils.rangeTo
+import norswap.autumn.utils.stream
+import norswap.violin.stream.filter
 
 /**
  * The parent of all parser classes.
@@ -68,6 +73,8 @@ import norswap.violin.utils.after
 abstract class Parser (vararg val children: Parser)
 {
     companion object {
+        private val inlinedSuffix = Regex("\\\$\\\$inlined\\\$invoke\\\$\\d+\$")
+
         /**
          * Use this builder to create subclasses of [Parser]. e.g.:
          *
@@ -90,22 +97,26 @@ abstract class Parser (vararg val children: Parser)
     }       }
 
     /**
-     * See [Parser]
-     */
-    var name: String? = null
-
-    /**
      * The name of this class, or the name of the function containing the [Parser.invoke]
-     * call that created this parser (possibly suffixed by $2, $3, ...) if the function contains
-     * more than one [Parser.invoke] invocation.
+     * call that created this parser.
      *
      * You can set this explicitly in order to more precisely define the nature of the
      * parser (e.g. if a parser class has important parameters, or for syntactic sugars).
      */
     var definer: String
-        = javaClass.simpleName
-        .removeSuffix("\$\$inlined\$invoke\$1")
-        .replace("\$\$inlined\$invoke", "")
+        = javaClass.simpleName.replace(inlinedSuffix, "")
+
+    /**
+     * If [Autumn.DEBUG], the stack trace leading to the construction of this parser.
+     * In particular, the top of the stack trace is the constructor of [Parser].
+     */
+    val lineage: List<StackTraceElement>?
+        = (Autumn.DEBUG) .. Throwable().stackTrace.toList()
+
+    /**
+     * See [Parser]
+     */
+    var name: String? = null
 
     /**
      * If true, don't trace the children of this parser when [Context.logTrace] is set.
@@ -132,7 +143,7 @@ abstract class Parser (vararg val children: Parser)
      * Called by [parse] before [_parse_].
      * @suppress
      */
-    final fun beforeParse(ctx: Context) {
+    fun beforeParse(ctx: Context) {
         if (ctx.debug) {
             ctx.trace.push(this)
             ctx.debugTraceBeforeHook(ctx, this)
@@ -157,7 +168,7 @@ abstract class Parser (vararg val children: Parser)
      * Called by [parse] after [_parse_].
      * @suppress
      */
-    final fun afterParse(ctx: Context, res: Result) {
+    fun afterParse(ctx: Context, res: Result) {
 
         if (noTrace && traceSuppressedAt != -1) {
             -- ctx.dbg.depth
@@ -186,7 +197,7 @@ abstract class Parser (vararg val children: Parser)
      * See [Parser]. Implement through [invoke] preferably, or through [_parse_].
      */
     @Suppress("NOTHING_TO_INLINE")
-    final inline fun parse(ctx: Context): Result {
+    inline fun parse(ctx: Context): Result {
         beforeParse(ctx)
         return _parse_(ctx) after { afterParse(ctx, it) }
     }
@@ -268,5 +279,37 @@ abstract class Parser (vararg val children: Parser)
     fun succeed(ctx: Context, cond: Boolean, msg: () -> String): Result
         = if (cond) Success else failure(ctx, msg)
 
-    /// --------------------------------------------------------------------------------------------
+    /// Debug Info ---------------------------------------------------------------------------------
+
+    /**
+     * If [Autumn.DEBUG], the [clickableString] of the first call **within a grammar field initializer**
+     * that causes the parser to be constructed. Possibly null if the parser was non constructed
+     * in an initializer.
+     */
+    fun useLocation(): String?
+        = lineage.stream()
+            .filter { it.isMethod(Grammar::class, "<init>") }
+            .next()
+            .let { it?.clickableString() }
+
+    /**
+     * If [Autumn.DEBUG], the [clickableString] where the parser is defined (i.e. the class declaration or
+     * the call to [invoke]).
+     */
+    fun definitionLocation(): String? {
+        if (lineage == null) return null
+        val inlined = inlinedSuffix.find(lineage[1].className) != null
+        return "at " + lineage[inlined .. 2 ?: 1]
+    }
+
+    /**
+     * If [Autumn.DEBUG], the [clickableString] where the parser is constructed (i.e. the call to the
+     * constructor or the call to the function calling [invoke]).
+     */
+    fun constructionLocation(): String?
+    {
+        if (lineage == null) return null
+        val inlined = inlinedSuffix.find(lineage[1].className) != null
+        return "at " + lineage[inlined .. 3 ?: 2]
+    }
 }

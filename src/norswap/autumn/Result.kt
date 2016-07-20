@@ -1,5 +1,6 @@
 package norswap.autumn
 import norswap.autumn.utils.JUtils.NoStackTrace
+import norswap.autumn.utils.isMethod
 import norswap.violin.link.*
 import norswap.violin.stream.*
 import norswap.violin.utils.plusAssign
@@ -159,30 +160,60 @@ class DebugFailure(
      * A snapshot of the state at the time of failure.
      */
     val snapshot = snapshot
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Returns a stream of pairs that pairs elements of [throwable] and [parserTrace]
+     *
+     * Each element of the stack trace that is a parser invocation is matched to the corresponding
+     * parser from the parser trace. If there is no parser trace, the parser element is null.
+     * Other elements of the stack trace are dropped.
+     */
     fun locatedParserTrace(): Stream<Pair<StackTraceElement, Parser?>>
         = throwable.stackTrace.stream()
-            .filter {  Parser::class.java.isAssignableFrom(Class.forName(it.className))
-                    && it.methodName == "_parse_" }
+            .filter {  it.isMethod(Parser::class, "_parse_") }
             .ziplong(parserTrace.stream())
             .map { Pair(it.first!!, it.second) }
 
-    // From [StackTraceElement.toString]
-    fun location(elem: StackTraceElement): String = elem.run {
-        if (fileName == null) "(Unknown Source)"
-        else if (lineNumber >= 0) "($fileName:$lineNumber)"
-        else "($fileName)"
-    }
+    // ---------------------------------------------------------------------------------------------
 
-    fun trace(): String {
+    /**
+     * Returns a string describing the chain of parser invocations that led to the failure.
+     */
+    fun trace(): String
+    {
         val b = StringBuilder()
-        b += this
-        locatedParserTrace().each { pair ->
-            val (elem, parser) = pair
-            val name = parser
-                ?.let { it.toStringSimple() }
-                ?: Class.forName(elem.className).simpleName
-            b += "\n  at $name ${location(elem)}"
+
+        if (throwable is StackTrace)
+            b += this
+        else
+            // (Usually) adds "$className: $message"
+            b += throwable
+
+        b += "\n"
+
+        locatedParserTrace().each body@
+        {
+            pair -> val (elem, parser) = pair
+            b += "  at "
+
+            if (parser == null) {
+                b += Class.forName(elem.className).simpleName
+                return@body
+            }
+
+            b += parser.toStringSimple()
+
+            if (Autumn.DEBUG) {
+                b += "\n    " + parser.definitionLocation() + " (defined)"
+                b += "\n    " + parser.constructionLocation() + " (constructed)"
+                parser.useLocation() ?.let { b += "\n    $it (used)" }
+            }
+
+            b += "\n"
         }
+
         return b.toString()
     }
 }
