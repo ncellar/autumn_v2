@@ -213,7 +213,7 @@ abstract class Parser (vararg val children: Parser)
     /**
      * Prints the parser: either its [name], or its definer and children.
      */
-    final override fun toString()
+    override fun toString()
         = name ?: "${definer}(${children.joinToString()})"
 
     /// Failures -----------------------------------------------------------------------------------
