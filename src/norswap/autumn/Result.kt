@@ -13,8 +13,8 @@ import java.util.Comparator
 open class Result internal constructor ()
 {
     override fun toString() = when (this) {
-        is Failure -> "Error: " + msg()
-        else -> "Successful"
+        is Failure -> "Failure: " + msg()
+        else -> "Success"
     }
 
     /**
