@@ -45,7 +45,7 @@ open class Result internal constructor ()
      * Run [body] if this is a [Failure].
      */
     infix inline fun orDo(body: (Failure) -> Unit): Result = when (this) {
-        is Failure -> { body(this) ; this }
+        is Failure -> { body(this) ; Success }
         else -> this
     }
 }
