@@ -1,6 +1,8 @@
 package norswap.autumn.utils
 import norswap.violin.stream.*
 import norswap.violin.stream.stream
+import java.io.PrintWriter
+import java.io.StringWriter
 import kotlin.reflect.KClass
 
 // -------------------------------------------------------------------------------------------------
@@ -83,5 +85,16 @@ operator inline fun <T: Any> Boolean.rangeTo(e: T): T?
 // TODO move to Violin
 fun <T: Any> List<T>?.stream(): Stream<T>
     = if (this == null) Stream<T>() else this.stream()
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Returns a string representation of the stack trace.
+ */
+fun Throwable.stackTraceString(): String {
+    val sw = StringWriter()
+    printStackTrace(PrintWriter(sw))
+    return sw.toString()
+}
 
 // -------------------------------------------------------------------------------------------------
