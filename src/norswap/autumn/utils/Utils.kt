@@ -1,4 +1,6 @@
 package norswap.autumn.utils
+import norswap.violin.stream.*
+import norswap.violin.stream.stream
 import kotlin.reflect.KClass
 
 /**
@@ -56,3 +58,14 @@ fun StackTraceElement.location(): String = run {
 fun StackTraceElement.isMethod(klass: KClass<*>, method: String)
     = isMethod(klass.java, method)
 
+// TODO move to Violin
+
+/**
+ * Enables the ternary operator: <boolean expr> .. <if-expr> ?: <else-expr>
+ */
+@Suppress("NOTHING_TO_INLINE")
+operator inline fun <T: Any> Boolean.rangeTo(e: T): T?
+    = if (this) e else null
+
+fun <T: Any> List<T>?.stream(): Stream<T>
+    = if (this == null) Stream<T>() else this.stream()
