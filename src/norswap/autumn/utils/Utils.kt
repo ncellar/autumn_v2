@@ -3,6 +3,8 @@ import norswap.violin.stream.*
 import norswap.violin.stream.stream
 import kotlin.reflect.KClass
 
+// -------------------------------------------------------------------------------------------------
+
 /**
  * Returns a version of this string where all tabs have been fully expanded, so that each tab
  * brings the column (counted from 0 starting at each newline) to a multiple of [tabSize].
@@ -28,6 +30,8 @@ fun String.expandTabs(tabSize: Int): String {
     return buf.toString()
 }
 
+// -------------------------------------------------------------------------------------------------
+
 /**
  * Indicates if the element indicates a call within the given class and method.
  */
@@ -35,12 +39,16 @@ fun StackTraceElement.isMethod(klass: Class<*>, method: String)
     =  klass.isAssignableFrom(Class.forName(this.className))
     && method == this.methodName
 
+// -------------------------------------------------------------------------------------------------
+
 /**
  * A string that describes this stack trace element, in a format recognized by IntelliJ,
  * for which it generates *correct* clickable links (important when inlining is involved).
  */
 fun StackTraceElement.clickableString()
     = "at " + this
+
+// -------------------------------------------------------------------------------------------------
 
 /**
  * Return a string describing the source code location of the stack trace element.
@@ -52,14 +60,17 @@ fun StackTraceElement.location(): String = run {
     else "($fileName)"
 }
 
+// -------------------------------------------------------------------------------------------------
+
 /**
  * Indicates if the element indicates a call within the given class and method.
  */
 fun StackTraceElement.isMethod(klass: KClass<*>, method: String)
     = isMethod(klass.java, method)
 
-// TODO move to Violin
+// -------------------------------------------------------------------------------------------------
 
+// TODO move to Violin
 /**
  * Enables the ternary operator: <boolean expr> .. <if-expr> ?: <else-expr>
  */
@@ -67,5 +78,10 @@ fun StackTraceElement.isMethod(klass: KClass<*>, method: String)
 operator inline fun <T: Any> Boolean.rangeTo(e: T): T?
     = if (this) e else null
 
+// -------------------------------------------------------------------------------------------------
+
+// TODO move to Violin
 fun <T: Any> List<T>?.stream(): Stream<T>
     = if (this == null) Stream<T>() else this.stream()
+
+// -------------------------------------------------------------------------------------------------
