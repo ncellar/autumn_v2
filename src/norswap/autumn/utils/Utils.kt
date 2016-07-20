@@ -44,6 +44,15 @@ fun StackTraceElement.isMethod(klass: Class<*>, method: String)
 // -------------------------------------------------------------------------------------------------
 
 /**
+ * Indicates if the element indicates a call within the given class and method.
+ */
+fun StackTraceElement.isMethod(klass: KClass<*>, method: String)
+    = isMethod(klass.java, method)
+
+
+// -------------------------------------------------------------------------------------------------
+
+/**
  * A string that describes this stack trace element, in a format recognized by IntelliJ,
  * for which it generates *correct* clickable links (important when inlining is involved).
  */
@@ -64,14 +73,6 @@ fun StackTraceElement.location(): String = run {
 
 // -------------------------------------------------------------------------------------------------
 
-/**
- * Indicates if the element indicates a call within the given class and method.
- */
-fun StackTraceElement.isMethod(klass: KClass<*>, method: String)
-    = isMethod(klass.java, method)
-
-// -------------------------------------------------------------------------------------------------
-
 // TODO move to Violin
 /**
  * Enables the ternary operator: <boolean expr> .. <if-expr> ?: <else-expr>
@@ -88,6 +89,7 @@ fun <T: Any> List<T>?.stream(): Stream<T>
 
 // -------------------------------------------------------------------------------------------------
 
+// TODO move to Violin
 /**
  * Returns a string representation of the stack trace.
  */
