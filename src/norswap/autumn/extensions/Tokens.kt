@@ -115,10 +115,6 @@ abstract class TokenGrammar: Grammar()
         return checkParser
     }
 
-    fun test() {
-        Str("").token { it }
-    }
-
     /**
      * Sugar for `this.token { it }`.
      */
