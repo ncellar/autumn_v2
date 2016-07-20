@@ -233,7 +233,6 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     fun diagnostic(result: Result): String {
         val b = StringBuilder()
         if (result is DebugFailure) {
-            // TODO handle stack overflows
             b += result.trace()
             b += "\n"
             b += result.snapshot.toString(this)

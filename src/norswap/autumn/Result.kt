@@ -193,8 +193,19 @@ class DebugFailure(
 
         b += "\n"
 
-        locatedParserTrace().each body@
-        {
+        // NOTE:
+        // I wanted to handle stack overflows specially, but isolating the loop is not easy.
+        // The best approach is to implement an algorithm that finds the longest sub-sequence that
+        // repeats itself OR an algorithm that finds the sub-sequence that repeats itself the most
+        // **sequentially**. A suffix tree is probably the way to go.
+
+        if (throwable !is StackTrace) {
+            throwable.stackTrace.stream()
+                .upTo { it.isMethod(Parser::class, "_parse_") }
+                .each { b += "  at $it\n" }
+        }
+
+        locatedParserTrace().each body@ {
             pair -> val (elem, parser) = pair
             b += "  at "
 
