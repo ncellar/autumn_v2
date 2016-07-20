@@ -140,7 +140,7 @@ fun Seq (vararg children: Parser) = Parser(*children) { ctx ->
  * Matches the same thing as [child], else succeeds matching nothing.
  */
 fun Opt (child: Parser) = Parser(child) { ctx ->
-    child.parse(ctx).or { Success }
+    child.parse(ctx) or { Success }
 }
 
 /**
@@ -155,7 +155,7 @@ fun ZeroMore (child: Parser) = Parser(child) { ctx ->
  * Fails if no invocation succeeds.
  */
 fun OneMore (child: Parser) = Parser(child) { ctx ->
-    child.parse(ctx) and { while (child.parse(ctx) is Success); Success }
+    child.parse(ctx) andDo { while (child.parse(ctx) is Success) ; }
 }
 
 /**
@@ -179,9 +179,8 @@ fun Repeat (n: Int, child: Parser) = Parser(child) body@ { ctx ->
  * Equivalent to `Optional(Seq(item, ZeroMore(Seq(sep, item))))`
  */
 fun Around (item: Parser, sep: Parser) = Parser(item, sep) { ctx ->
-    item.parse(ctx) and {
-        while (transact(ctx) { sep.parse(ctx) and { item.parse(ctx) } } is Success);
-        Success
+    item.parse(ctx) andDo {
+        while (transact(ctx) { sep.parse(ctx) and { item.parse(ctx) } } is Success) ;
     } or { Success }
 }
 
@@ -265,10 +264,10 @@ fun Failing()
     = Parser { failure(it) }
 
 /**
- * Always fails, using [e] to construct the returned failure.
+ * Always fails, using [f] to construct the returned failure.
  */
-fun Raise (e: Parser.(Context) -> Failure)
-    = Parser { e(it) }
+fun Raise (f: Parser.(Context) -> Failure)
+    = Parser { f(it) }
 
 /**
  * Always fails, using [msg] to construct the message of the returned failure.
