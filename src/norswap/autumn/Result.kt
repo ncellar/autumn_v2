@@ -206,9 +206,11 @@ class DebugFailure(
             b += parser.toStringSimple()
 
             if (Autumn.DEBUG) {
-                b += "\n    " + parser.definitionLocation() + " (defined)"
-                b += "\n    " + parser.constructionLocation() + " (constructed)"
-                parser.useLocation() ?.let { b += "\n    $it (used)" }
+                b += "\n    defined\n      "
+                b += parser.definitionLocation()
+                b += "\n    constructed\n      "
+                b +=  parser.constructionLocation()
+                parser.useLocation() ?.let { b += "\n    used\n      $it" }
             }
 
             b += "\n"
