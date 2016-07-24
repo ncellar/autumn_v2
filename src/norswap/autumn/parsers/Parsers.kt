@@ -328,6 +328,20 @@ fun OrRaise (child: Parser, e: Parser.(Context) -> Failure) =  Parser(child) { c
 fun OrRaiseMsg (child: Parser, msg: Parser.(Context) -> String)
     = OrRaise(child) { ctx -> failure(ctx) { msg(ctx) } }
 
+/**
+ * Matches this parser. If it throws an exception, which is not a panic and which satisfies [pred],
+ * catch it and return a failure indicating this exception was caught.
+ */
+fun Catch (child: Parser, pred: (Throwable) -> Boolean = { true }) = Parser(child) { ctx ->
+   try {
+       child.parse(ctx)
+   }
+   catch (e: Throwable) {
+       if (e !is Carrier && pred(e)) failure(ctx) { "Thrown exception: $e" }
+       else throw e
+   }
+}
+
 /// Debugging //////////////////////////////////////////////////////////////////////////////////////
 
 /**
