@@ -82,7 +82,7 @@ abstract class TokenGrammar: Grammar()
     /**
      * List of [TokenTypeParser] for each registered token, indexed by token type ID.
      */
-    private var typeParsers = mutableListOf<TokenTypeParser>()
+    internal var typeParsers = mutableListOf<TokenTypeParser>()
 
     /**
      * List of [TokenCheckParser] for each registered token, indexed by token type ID.
@@ -177,8 +177,10 @@ class TokenCheckParser (val type: Int, val info: Boolean, val grammar: TokenGram
         if (token.type != type) {
             ctx.pos = pos
             return failure(ctx) {
-                val expected = this.name ?: type.toString()
-                val actual = grammar.checkParsers[token.type].name ?: token.type.toString()
+                val expected
+                    = this.name ?: grammar.typeParsers[type].fullString()
+                val actual
+                    = grammar.checkParsers[token.type].name ?: grammar.typeParsers[type].fullString()
                 "Expected token type [$expected] but got [$actual] instead"
             }
         }

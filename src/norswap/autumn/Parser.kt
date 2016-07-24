@@ -205,13 +205,13 @@ abstract class Parser (vararg val children: Parser)
     /// Strings ------------------------------------------------------------------------------------
 
     /**
-     * Prints the parser: either its [name], or its definer and children.
+     * Return the parser's [name] if set, or its definer and children.
      */
     fun fullString(): String
         = name ?: "${definer}(${children.map(Parser::fullString).joinToString()})"
 
     /**
-     * Prints the [name] of the Parser, if it has one, else its definer.
+     * Return the parser's [name] if set, or its definer.
      */
     override fun toString(): String
         = name ?: definer
