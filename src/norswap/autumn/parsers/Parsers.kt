@@ -313,7 +313,7 @@ fun Paranoid (child: Parser) = Parser(child) { ctx ->
  * everything by default), returns it instead.
  */
 fun Chill (child: Parser, pred: (Failure) -> Boolean = { true }) = Parser(child) { ctx ->
-    tryParse(pred) { child.parse(ctx) }
+    chill(pred) { child.parse(ctx) }
 }
 
 /**
@@ -338,7 +338,7 @@ fun Catch (child: Parser, pred: (Throwable) -> Boolean = { true }) = Parser(chil
        child.parse(ctx)
    }
    catch (e: Throwable) {
-       if (e !is Carrier && pred(e)) failure(ctx) { "Thrown exception: $e" }
+       if (e !is PanicCarrier && pred(e)) failure(ctx) { "Thrown exception: $e" }
        else throw e
    }
 }
@@ -560,7 +560,7 @@ fun PredicateMsg (msg: Parser.(Context) -> String, pred: Parser.(Context) -> Boo
  */
 fun Bounded (source: Parser, around: Parser) =
     WithMatchString(source) { ctx, str ->
-        tryParse { around.parse(Context(str, SingletonGrammar(around))) }
+        chill { around.parse(Context(str, SingletonGrammar(around))) }
     } withDefiner "Bounded"
 
 /**
@@ -570,7 +570,7 @@ fun Bounded (source: Parser, around: Parser) =
  */
 fun Bounded (child: Parser, f: Parser.(Context) -> Result)
     = WithMatchString(child) { ctx, str ->
-        tryParse { f(Context(str, SingletonGrammar(child))) }
+        chill { f(Context(str, SingletonGrammar(child))) }
     } withDefiner "Bounded"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

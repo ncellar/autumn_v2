@@ -17,12 +17,16 @@ import norswap.violin.utils.plusAssign
 class DebugFailure(
     pos: Int,
     msg: () -> String,
-    throwable: Throwable,
     parserTrace: Link<Parser>?,
-    snapshot: Snapshot
+    snapshot: Snapshot,
+    throwable: Throwable = StackTrace()
 )
 : Failure(pos, msg)
 {
+    // ---------------------------------------------------------------------------------------------
+
+    private class StackTrace : Throwable()
+
     // ---------------------------------------------------------------------------------------------
 
     /**

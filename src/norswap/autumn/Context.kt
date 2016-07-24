@@ -131,15 +131,15 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      */
     fun parse(): Result {
         grammar.initialize()
-        return try { grammar.root.parse(this) }
-        catch (e: Carrier) { e.failure }
+        return try { chill { grammar.root.parse(this) } }
+        catch (e: PanicCarrier) { e.failure }
         catch (e: Throwable) {
             DebugFailure(
                 pos = pos,
                 msg = { "exception thrown by parser" },
-                throwable = e,
                 parserTrace = trace.link,
-                snapshot = snapshot())
+                snapshot = snapshot(),
+                throwable = e)
     }   }
 
     /// State Retrieval ----------------------------------------------------------------------------
@@ -213,7 +213,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * If [debug] is true, prints a parse trace (using [trace]) to [logStream].
      */
     fun logTrace() {
-        val trace = DebugFailure(pos, {""}, StackTrace(), trace.link, snapshot()).trace()
+        val trace = DebugFailure(pos, {""}, trace.link, snapshot()).trace()
         logStream.println("Trace\n" + trace.removeRange(0..trace.indexOf('\n')))
     }
 

@@ -54,7 +54,7 @@ import norswap.violin.stream.filter
  *
  * A parser can exit through a panic ([panic]) which throws an exception, so you shouldn't
  * rely on the code after any [Parser.invoke] invocation being executed. If it is nevertheless
- * necessary, use a `finally` block or [tryParse]. It is however not necessary to use those
+ * necessary, use a `finally` block or [chill]. It is however not necessary to use those
  * mechanisms to restore the state, as it must be restored to an earlier snapshot when/if the panic
  * is caught.
  *
@@ -229,7 +229,7 @@ abstract class Parser (vararg val children: Parser)
     fun plainFailure(ctx: Context, msg: Parser.(Context) -> String): Failure {
         val msg2 = { this.msg(ctx) }
         return if (!ctx.debug) Failure(ctx.pos, msg2)
-        else DebugFailure(ctx.pos, msg2, StackTrace(), ctx.trace.link, ctx.snapshot())
+        else DebugFailure(ctx.pos, msg2, ctx.trace.link, ctx.snapshot())
     }
 
     /**
@@ -250,12 +250,6 @@ abstract class Parser (vararg val children: Parser)
         val pos = ctx.pos
         return plainFailure(ctx) { "in $this at ${ctx.posToString(pos)}" }
     }
-
-    /**
-     * Panic, throwing the given failure, which can be caught with [tryParse] or
-     * [norswap.autumn.parsers.Chill], or will be caught by [parse] as a last resort.
-     */
-    fun panic(e: Failure): Result = throw Carrier(e)
 
     /// Utilities ----------------------------------------------------------------------------------
 
