@@ -56,9 +56,9 @@ open class Result internal constructor ()
      * Run [body] if this is a Success.
      */
     infix inline fun andDo(body: () -> Unit): Result = when (this) {
-    is Success ->  { body() ; Success }
-    else -> this
-}
+        is Success ->  { body() ; Success }
+        else -> this
+    }
 }
 
 /// SUCCESS ////////////////////////////////////////////////////////////////////////////////////////
