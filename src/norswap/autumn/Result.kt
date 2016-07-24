@@ -215,7 +215,7 @@ class DebugFailure(
                 return@body
             }
 
-            b += parser.toStringSimple()
+            b += parser
 
             if (Autumn.DEBUG) {
                 b += "\n    defined\n      "

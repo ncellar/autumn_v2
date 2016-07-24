@@ -1,3 +1,4 @@
+@file:Suppress("RedundantSemicolon")
 package norswap.autumn.parsers
 import norswap.autumn.*
 import norswap.violin.Maybe
@@ -57,12 +58,11 @@ fun CharSet (vararg chars: Char) = Parser { ctx ->
  */
 class Str (val str: String): Parser()
 {
+    init { definer = "Str($str)" }
+
     override fun _parse_(ctx: Context) =
         succeed(ctx) { ctx.text.regionMatches(ctx.pos, str, 0, str.length) }
             .andDo { ctx.pos += str.length }
-
-    override fun toString() =
-        "Str($str)"
 }
 
 /// Choices ////////////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +75,7 @@ fun Choice (vararg children: Parser) = Parser(*children) { ctx ->
         .map { it.parse(ctx) }
         .upThrough { it is Success }
         .maxWith(Furthest)
-        ?: failure(ctx) { "empty choice: ${toStringSimple()}" }
+        ?: failure(ctx) { "empty choice: $this" }
 }
 
 /**
@@ -110,7 +110,7 @@ fun Longest (vararg children: Parser) = Parser(*children) body@ { ctx ->
     else if (furthestFailure != null)
         furthestFailure
     else
-        failure(ctx) { "empty longest-match choice: ${toStringSimple()}" }
+        failure(ctx) { "empty longest-match choice: $this" }
 }
 
 /// Lookahead //////////////////////////////////////////////////////////////////////////////////////
@@ -130,7 +130,7 @@ fun Not (child: Parser) = Parser(child) { ctx ->
     val result = child.parse(ctx)
     if (result is Success) {
         ctx.restore(snapshot)
-        failure(ctx) { child.toStringSimple() + " succeeded" }
+        failure(ctx) { "$child succeeded" }
     } else Success
 }
 
@@ -204,7 +204,7 @@ fun Around (item: Parser, sep: Parser) = Parser(item, sep) { ctx ->
  */
 fun Around1 (item: Parser, sep: Parser) = Parser(item, sep) { ctx ->
     item.parse(ctx) and {
-        while (transact(ctx) { sep.parse(ctx) and { item.parse(ctx) } } is Success);
+        while (transact(ctx) { sep.parse(ctx) and { item.parse(ctx) } } is Success) ;
         Success
 }   }
 

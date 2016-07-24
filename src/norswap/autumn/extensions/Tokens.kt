@@ -17,7 +17,7 @@ data class Token<T: Any> (val type: Int, val start: Int, val end: Int, val value
         = "Token<${value?.javaClass?.simpleName ?: "Nothing"}>"
 
     fun toStringWithPos (ctx: Context)
-        = "${toString()} (${ctx.rangeToString(start, end)}): $value"
+        = "$this (${ctx.rangeToString(start, end)}): $value"
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

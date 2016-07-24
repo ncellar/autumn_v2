@@ -151,7 +151,7 @@ abstract class Parser (vararg val children: Parser)
 
         if (ctx.logTrace) {
             ctx.dbg.lastResMsg = ""
-            ctx.logStream.println("${"-|".repeat(ctx.dbg.depth)} ${toStringSimple()} ($ctx.posStr)")
+            ctx.logStream.println("${"-|".repeat(ctx.dbg.depth)} $this ($ctx.posStr)")
             ++ctx.dbg.depth
             if (noTrace) {
                 traceSuppressedAt = ctx.dbg.depth
@@ -205,16 +205,16 @@ abstract class Parser (vararg val children: Parser)
     /// Strings ------------------------------------------------------------------------------------
 
     /**
-     * Prints the [name] of the Parser, if it has one, and its definer.
-     */
-    fun toStringSimple(): String
-        = if (name != null) "$name (${definer})" else definer
-
-    /**
      * Prints the parser: either its [name], or its definer and children.
      */
-    override fun toString()
-        = name ?: "${definer}(${children.joinToString()})"
+    fun fullString(): String
+        = name ?: "${definer}(${children.map(Parser::fullString).joinToString()})"
+
+    /**
+     * Prints the [name] of the Parser, if it has one, else its definer.
+     */
+    override fun toString(): String
+        = name ?: definer
 
     /// Failures -----------------------------------------------------------------------------------
 
@@ -237,7 +237,8 @@ abstract class Parser (vararg val children: Parser)
      */
     fun failure(ctx: Context, msg: () -> String): Failure {
         val pos = ctx.pos
-        return plainFailure(ctx) { msg() + " (in ${toStringSimple()} at ${ctx.posToString(pos)})" }
+        return plainFailure(ctx) {
+            "${msg()} (in $this at ${ctx.posToString(pos)})" }
     }
 
     /**
@@ -246,7 +247,7 @@ abstract class Parser (vararg val children: Parser)
      */
     fun failure(ctx: Context): Failure {
         val pos = ctx.pos
-        return plainFailure(ctx) { "in ${toStringSimple()} at ${ctx.posToString(pos)}" }
+        return plainFailure(ctx) { "in $this at ${ctx.posToString(pos)}" }
     }
 
     /**
@@ -306,8 +307,7 @@ abstract class Parser (vararg val children: Parser)
      * If [Autumn.DEBUG], the [clickableString] where the parser is constructed (i.e. the call to the
      * constructor or the call to the function calling [invoke]).
      */
-    fun constructionLocation(): String?
-    {
+    fun constructionLocation(): String? {
         if (lineage == null) return null
         val inlined = inlinedSuffix.find(lineage[1].className) != null
         return "at " + lineage[inlined .. 3 ?: 2]
