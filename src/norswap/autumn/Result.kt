@@ -77,8 +77,7 @@ object Success: Result()
  *
  * Failures are usually constructed through [Parser.failure].
  */
-
-open class Failure(pos: Int, msg: () -> String): Result()
+open class Failure (pos: Int, msg: () -> String): Result()
 {
     // ---------------------------------------------------------------------------------------------
 
