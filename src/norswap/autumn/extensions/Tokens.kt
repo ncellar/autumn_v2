@@ -4,6 +4,7 @@ import norswap.autumn.parsers.*
 import norswap.violin.utils.plusAssign
 import norswap.violin.stream.*
 import norswap.autumn.extensions.TokenGrammar.TokenDisambiguation.*
+import norswap.autumn.result.*
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

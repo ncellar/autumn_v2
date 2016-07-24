@@ -1,4 +1,5 @@
 package norswap.autumn
+import norswap.autumn.result.*
 import norswap.autumn.utils.isMethod
 import norswap.autumn.utils.clickableString
 import norswap.violin.utils.after

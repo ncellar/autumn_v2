@@ -1,5 +1,6 @@
 package norswap.autumn.parsers
 import norswap.autumn.*
+import norswap.autumn.result.*
 import norswap.violin.utils.after
 
 /// Parsing Characters /////////////////////////////////////////////////////////////////////////////

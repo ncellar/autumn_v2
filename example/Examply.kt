@@ -1,6 +1,7 @@
 @file:Suppress("UNCHECKED_CAST")
 import norswap.autumn.*
 import norswap.autumn.parsers.*
+import norswap.autumn.result.Success
 import norswap.autumn.utils.*
 import norswap.violin.*
 import norswap.violin.link.LinkList
