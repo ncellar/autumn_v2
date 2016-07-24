@@ -200,6 +200,7 @@ class DebugFailure(
         // **sequentially**. A suffix tree is probably the way to go.
 
         if (throwable !is StackTrace) {
+            // Prints the part of the stacktrace occuring underneath a leaf parser.
             throwable.stackTrace.stream()
                 .upTo { it.isMethod(Parser::class, "_parse_") }
                 .each { b += "  at $it\n" }
