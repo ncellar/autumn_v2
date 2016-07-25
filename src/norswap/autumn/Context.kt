@@ -3,7 +3,6 @@ package norswap.autumn
 import norswap.autumn.result.*
 import norswap.violin.link.LinkList
 import norswap.violin.stream.*
-import norswap.violin.utils.*
 import java.io.PrintStream
 import kotlin.reflect.KClass
 
@@ -72,23 +71,17 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     val posStr: String /**/ get() = posToString(pos)
 
     /**
-     * If debug mode is active, [Parser.failure] will generate instances of [DebugFailure], which
-     * include a lot more diagnostic information, at the cost of performance. Default: false
-     */
-    var debug = false
-
-    /**
      * If true, prints a trace of the execution as a tree of parser invocations. Default: false
      */
     var logTrace = false
 
     /**
-     * If [debug], this gets called before invoking any parser and logging its invocation.
+     * If [DEBUG], this gets called before invoking any parser and logging its invocation.
      */
     var debugTraceBeforeHook: Context.(Parser) -> Unit = {}
 
     /**
-     * If [debug], this gets called after invoking any parser and logging its invocation.
+     * If [DEBUG], this gets called after invoking any parser and logging its invocation.
      */
     var debugTraceAfterHook: Context.(Parser) -> Unit = {}
 
@@ -133,15 +126,8 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
         grammar.initialize()
         return try { grammar.root.parse(this) }
         catch (p: Panic) { p.failure }
-        catch (e: Throwable) {
-            DebugFailure(
-                pos = pos,
-                parser = if (debug) trace.peek()!! else grammar.root,
-                msg = { "exception thrown by parser" },
-                parserTrace = trace.link,
-                snapshot = snapshot(),
-                throwable = e)
-    }   }
+        catch (e: Throwable) { grammar.root.failure(this, e) }
+    }
 
     /// State Retrieval ----------------------------------------------------------------------------
 
@@ -214,7 +200,9 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * If [debug] is true, prints a parse trace (using [trace]) to [logStream].
      */
     fun logTrace() {
-        val trace = DebugFailure(pos, if (debug) trace.peek()!! else grammar.root, {""}, trace.link, snapshot()).trace()
+        val parser = if (DEBUG) trace.peek()!! else grammar.root
+        val failure = DebugFailure(pos, parser, {""}, trace.link, snapshot())
+        val trace = trace(failure)
         logStream.println("Trace\n" + trace.removeRange(0..trace.indexOf('\n')))
     }
 
@@ -223,30 +211,6 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      */
     fun stateString(): String
         = snapshot().toString(this)
-
-    /**
-     * Returns a complete diagnostic of the result.
-     *
-     * This will include the reached input position in case of success, and the message in case
-     * of failure. If the result is a [DebugFailure], a parse trace ([DebugFailure.trace]) will be
-     * printed, along with either the exception or failure message, and the state at the time of
-     * failure.
-     */
-    fun diagnostic(result: Result): String {
-        val b = StringBuilder()
-        if (result is DebugFailure) {
-            b += result.trace()
-            b += "\n"
-            b += result.snapshot.toString(this)
-        }
-        else if (result is Failure)
-            b += result
-        else if (pos >= text.length - 1)
-            b += "Success (full match)"
-        else
-            b += "Success up to $posStr (EOF at ${posToString(text.length - 1)})"
-        return b.toString()
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -340,7 +340,7 @@ fun Catch (child: Parser, pred: (Throwable) -> Boolean = { true }) = Parser(chil
        child.parse(ctx)
    }
    catch (e: Throwable) {
-       if (e !is Panic && pred(e)) failure(ctx) { "Thrown exception: $e" }
+       if (e !is Panic && pred(e)) failure(ctx, e)
        else throw e
    }
 }

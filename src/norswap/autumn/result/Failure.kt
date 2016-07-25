@@ -5,8 +5,10 @@ import norswap.autumn.Parser
  * The parser invocation was unsuccessful: the parser didn't "match" the input.
  *
  * Failures are usually constructed through [Parser.failure].
+ *
+ * See also [DebugFailure].
  */
-open class Failure (pos: Int, parser: Parser, msg: () -> String): Result()
+open class Failure (pos: Int, parser: Parser, msg: () -> String, cause: Throwable? = null): Result()
 {
     // ---------------------------------------------------------------------------------------------
 
@@ -29,4 +31,11 @@ open class Failure (pos: Int, parser: Parser, msg: () -> String): Result()
      * shown, making this a lazily-evaluated function is cheaper.
      */
     val msg = msg
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * If this failure was caused by an exception (but not a [Panic]), that exception.
+     */
+    val cause = cause
 }
