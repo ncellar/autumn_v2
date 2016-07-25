@@ -293,7 +293,7 @@ fun RaiseMsg (msg: Parser.(Context) -> String)
  * Throws a panic, using [e] to construct the thrown failure.
  */
 fun Panic (e: Parser.(Context) -> Failure)
-    = Parser { panic(e(it)) }
+    = Parser { throw Panic(e(it)) }
 
 /**
  * Throws a panic, using [msg] to construct the message of the thrown failure.
@@ -305,12 +305,14 @@ fun PanicMsg (msg: Parser.(Context) -> String)
  * Matches [child], else throws the failure it returned.
  */
 fun Paranoid (child: Parser) = Parser(child) { ctx ->
-    child.parse(ctx) or { panic(it) }
+    child.parse(ctx) or { throw Panic(it) }
 }
 
 /**
  * Matches [child], else fails. If [child] throws a failure that matches [pred] (matches
  * everything by default), returns it instead.
+ *
+ * See also [chill].
  */
 fun Chill (child: Parser, pred: (Failure) -> Boolean = { true }) = Parser(child) { ctx ->
     chill(pred) { child.parse(ctx) }
@@ -338,7 +340,7 @@ fun Catch (child: Parser, pred: (Throwable) -> Boolean = { true }) = Parser(chil
        child.parse(ctx)
    }
    catch (e: Throwable) {
-       if (e !is PanicCarrier && pred(e)) failure(ctx) { "Thrown exception: $e" }
+       if (e !is Panic && pred(e)) failure(ctx) { "Thrown exception: $e" }
        else throw e
    }
 }

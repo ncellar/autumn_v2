@@ -131,8 +131,8 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      */
     fun parse(): Result {
         grammar.initialize()
-        return try { chill { grammar.root.parse(this) } }
-        catch (e: PanicCarrier) { e.failure }
+        return try { grammar.root.parse(this) }
+        catch (p: Panic) { p.failure }
         catch (e: Throwable) {
             DebugFailure(
                 pos = pos,
