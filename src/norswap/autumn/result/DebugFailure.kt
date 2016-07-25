@@ -16,12 +16,13 @@ import norswap.violin.utils.plusAssign
  */
 class DebugFailure(
     pos: Int,
+    parser: Parser,
     msg: () -> String,
     parserTrace: Link<Parser>?,
     snapshot: Snapshot,
     throwable: Throwable = StackTrace()
 )
-: Failure(pos, msg)
+: Failure(pos, parser, msg)
 {
     // ---------------------------------------------------------------------------------------------
 

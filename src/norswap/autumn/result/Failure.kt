@@ -1,10 +1,12 @@
 package norswap.autumn.result
+import norswap.autumn.Parser
+
 /**
  * The parser invocation was unsuccessful: the parser didn't "match" the input.
  *
  * Failures are usually constructed through [Parser.failure].
  */
-open class Failure (pos: Int, msg: () -> String): Result()
+open class Failure (pos: Int, parser: Parser, msg: () -> String): Result()
 {
     // ---------------------------------------------------------------------------------------------
 
@@ -12,6 +14,13 @@ open class Failure (pos: Int, msg: () -> String): Result()
      * The position at which the failure occurred.
      */
     val pos = pos
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * The parser that failed.
+     */
+    val parser = parser
 
     // ---------------------------------------------------------------------------------------------
 

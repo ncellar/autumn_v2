@@ -136,6 +136,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
         catch (e: Throwable) {
             DebugFailure(
                 pos = pos,
+                parser = if (debug) trace.peek()!! else grammar.root,
                 msg = { "exception thrown by parser" },
                 parserTrace = trace.link,
                 snapshot = snapshot(),
@@ -213,7 +214,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * If [debug] is true, prints a parse trace (using [trace]) to [logStream].
      */
     fun logTrace() {
-        val trace = DebugFailure(pos, {""}, trace.link, snapshot()).trace()
+        val trace = DebugFailure(pos, if (debug) trace.peek()!! else grammar.root, {""}, trace.link, snapshot()).trace()
         logStream.println("Trace\n" + trace.removeRange(0..trace.indexOf('\n')))
     }
 
