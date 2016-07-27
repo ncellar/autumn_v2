@@ -1,4 +1,3 @@
-@file:Suppress("RedundantSemicolon")
 package norswap.autumn.parsers
 import norswap.autumn.*
 import norswap.autumn.result.*
