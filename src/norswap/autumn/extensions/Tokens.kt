@@ -96,8 +96,8 @@ abstract class TokenGrammar: Grammar()
         val array = typeParsers.toTypedArray()
 
         tokenParser = when (tokenDisambiguation) {
-            ORDERING      -> Choice  (*array).orRaiseMsg { msg }
-            LONGEST_MATCH -> Longest (*array).orRaiseMsg { msg }
+            ORDERING      -> Choice  (*array).orFail { failure(it) { msg } }
+            LONGEST_MATCH -> Longest (*array).orFail { failure(it) { msg } }
         }   }
 
     /**

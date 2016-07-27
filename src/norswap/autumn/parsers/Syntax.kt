@@ -8,7 +8,7 @@ import norswap.violin.utils.after
 /**
  * [AnyChar]
  */
-val any = AnyChar() withDefiner "any"
+val any = AnyChar
 
 /**
  * The end-of-file (null) character.
@@ -120,16 +120,11 @@ infix fun Parser.until1_(until: Parser)
 /// Failure Handling ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * See [OrRaise].
+ * See [OrFail].
  */
-infix fun Parser.orRaise(e: Parser.(Context) -> Failure)
-    = OrRaise(this, e)
+infix fun Parser.orFail(e: Parser.(Context) -> Failure)
+    = OrFail(this, e)
 
-/**
- * See [OrRaiseMsg].
- */
-infix fun Parser.orRaiseMsg(msg: Parser.(Context) -> String)
-    = OrRaiseMsg(this, msg)
 
 /// Diagnostic /////////////////////////////////////////////////////////////////////////////////////
 
