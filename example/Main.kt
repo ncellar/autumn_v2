@@ -1,11 +1,13 @@
 import norswap.autumn.Context
+import norswap.autumn.DEBUG
+import norswap.autumn.diagnostic
 import norswap.violin.utils.readFile
 
 fun main(args: Array<String>) {
+    DEBUG = true
     val input = readFile("example/example2.ply")
     val context = Context(input, Examply)
-    context.debug = true
     val result = context.parse()
-    println(context.diagnostic(result))
+    println(diagnostic(context, result))
     println(context.stack.toString(context))
 }
