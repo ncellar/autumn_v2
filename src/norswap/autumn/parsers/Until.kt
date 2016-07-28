@@ -42,7 +42,9 @@ class Until (
             if (r1 is Success) {
                 if (matchSome && cnt == 0) {
                     ctx.restore(initial)
-                    return failure(ctx) { "Until with matchSome did not match any repeatable item" }
+                    ctx.failure =
+                        failure(ctx) { "Until with matchSome did not match any repeatable item" }
+                    return ctx.failure
                 } else {
                     if (!matchUntil) ctx.restore(snapshot)
                     return Success
@@ -52,7 +54,7 @@ class Until (
             val r2 = repeat.parse(ctx)
             if (r2 is Failure) {
                 ctx.restore(initial)
-                return Furthest.max(r1, r2)
+                return ctx.failure
             }
 
             if (!matchUntil) snapshot = ctx.snapshot()

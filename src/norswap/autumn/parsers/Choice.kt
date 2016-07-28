@@ -14,16 +14,15 @@ class Choice (vararg children: Parser): Parser(*children)
 {
     override fun _parse_(ctx: Context): Result
     {
-        var fail: Failure? = null
-
         for (child in children) {
             val r = child.parse(ctx)
-            if (r !is Failure) return r
-            else if (fail == null) fail = r
-            else fail = Furthest.max(fail, r)
+            if (r is Success) return Success
         }
 
-        return fail ?: failure(ctx) { "empty choice" }
+        return ctx.failure.let {
+            if (it is Failure) it
+            else failure(ctx) { "empty choice" }
+        }
     }
 }
 
@@ -40,30 +39,27 @@ class Longest (vararg children: Parser): Parser(*children)
         val initial = ctx.snapshot()
         var bestSnapshot = initial
         var bestPos = -1
-        var fail: Failure? = null
 
         for (child in children)
         {
             val r = child.parse(ctx)
 
-            if (r !is Failure) {
+            if (r is Success) {
                 if (ctx.pos > bestPos) {
                     bestPos = ctx.pos
                     bestSnapshot = ctx.snapshot()
                 }
                 ctx.restore(initial)
             }
-            else if (bestPos == -1) {
-                fail = Furthest.max(fail ?: r, r)
-            }
         }
 
-        if (bestPos > -1) {
+        return if (bestPos > -1) {
             ctx.restore(bestSnapshot)
-            return Success
+            Success
         }
-        else {
-            return fail ?: failure(ctx) { "empty longest-match choice" }
+        else ctx.failure.let {
+            if (it is Failure) it
+            else failure(ctx) { "empty longest-match choice" }
         }
     }
 }

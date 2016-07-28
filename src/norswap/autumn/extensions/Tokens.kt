@@ -12,7 +12,7 @@ import norswap.autumn.result.*
  * Holds a type identifier for the token, its location within the input, as well as its derived
  * value (as determined by [Grammar.token]).
  */
-data class Token<T: Any> (val type: Int, val start: Int, val end: Int, val value: T?)
+data class Token<T: Any> (val type: Int, val start: Int, val end: Int, val wEnd: Int, val value: T?)
 {
     override fun toString()
         = "Token<${value?.javaClass?.simpleName ?: "Nothing"}>"
@@ -23,7 +23,7 @@ data class Token<T: Any> (val type: Int, val start: Int, val end: Int, val value
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-val NO_RESULT = Token<Nothing>(-1, -1, -1, null)
+val NO_RESULT = Token<Nothing>(-1, -1, -1, -1, null)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -152,9 +152,10 @@ class TokenTypeParser (
         val pos = ctx.pos
         val result = target.parse(ctx)
         if (result is Success) {
-            val token = Token(type, pos, ctx.pos, value(ctx.textFrom(pos)))
-            ctx.stack.push(token)
+            val end = ctx.pos
             grammar.whitespace.parse(ctx)
+            val token = Token(type, pos, end, ctx.pos, value(ctx.textFrom(pos)))
+            ctx.stack.push(token)
         }
         return result
     }
@@ -191,7 +192,8 @@ class TokenCheckParser (val type: Int, val info: Boolean, val grammar: TokenGram
         else if (token.value != null)
             ctx.stack.push(token.value)
 
-        ctx.pos = token.end
+        // TODO unfix here to check furthest
+        ctx.pos = token.wEnd
         return Success
     }
 

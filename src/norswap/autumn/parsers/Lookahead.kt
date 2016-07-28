@@ -2,6 +2,7 @@ package norswap.autumn.parsers
 import norswap.autumn.Context
 import norswap.autumn.Parser
 import norswap.autumn.result.*
+import norswap.autumn.utils.dontRecordFailures
 
 // Parsers that do not advance the input position.
 
@@ -12,8 +13,12 @@ import norswap.autumn.result.*
  */
 class Ahead (val child: Parser): Parser(child)
 {
-    override fun _parse_(ctx: Context)
-        = ctx.snapshot().let { child.parse(ctx) andDo { ctx.restore(it) } }
+    override fun _parse_(ctx: Context): Result
+    {
+        val snapshot = ctx.snapshot()
+        return ctx.dontRecordFailures { child.parse(ctx) } andDo { ctx.restore(snapshot) }
+
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -23,9 +28,10 @@ class Ahead (val child: Parser): Parser(child)
  */
 class Not (val child: Parser): Parser(child)
 {
-    override fun _parse_(ctx: Context): Result {
+    override fun _parse_(ctx: Context): Result
+    {
         val snapshot = ctx.snapshot()
-        val result = child.parse(ctx)
+        val result = ctx.dontRecordFailures { child.parse(ctx) }
         if (result is Success) {
             ctx.restore(snapshot)
             return failure(ctx) { "not operand succeeded" }
@@ -34,4 +40,4 @@ class Not (val child: Parser): Parser(child)
     }
 }
 
-// -------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------

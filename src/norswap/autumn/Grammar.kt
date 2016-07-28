@@ -22,7 +22,7 @@ abstract class Grammar
     /**
      * The parser used to skip whitespace after matching a token or a [plusAssign] string.
      */
-    open val whitespace = ZeroMore(CharPred(Char::isWhitespace))
+    open val whitespace: Parser = ZeroMore(CharPred(Char::isWhitespace))
 
     /**
      * Override this function to indicate which states are required to parse the grammar correctly.

@@ -1,6 +1,9 @@
 @file:Suppress("CanBePrimaryConstructorProperty")
 package norswap.autumn
 import norswap.autumn.result.*
+import norswap.autumn.state.FurthestFailure
+import norswap.autumn.state.Position
+import norswap.autumn.utils.dontRecordFailures
 import norswap.violin.link.LinkList
 import norswap.violin.stream.*
 import java.io.PrintStream
@@ -22,6 +25,14 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * This is in fact handled by an internal [State] but stored here for convenience.
      */
     var pos = 0
+
+    /**
+     * The furthest failure encountered while parsing the current parser. [Success] means no
+     * failures where encountered. Inhibit this recording by using [dontRecordFailures].
+     *
+     * This is in fact handled by an internal [State] but stored here for convenience.
+     */
+    var failure: Result = Success
 
     /**
      * State to build some result form the parse (typically an AST).
@@ -99,10 +110,12 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     internal val states: List<State<*,*>>
     private val stateMap: MutableMap<Class<out State<*,*>>, State<*,*>>
     private val position = Position(this)
+    private val furthestFailureState = FurthestFailure(this)
 
     init {
         stateMap = mutableMapOf(
             position.javaClass to position,
+            furthestFailureState.javaClass to furthestFailureState,
             stack.javaClass to stack,
             seeds.javaClass to seeds)
         grammar.requiredStates().forEach { stateMap.put(it.javaClass, it) }
@@ -121,8 +134,20 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      *
      * If the parser throws an exception it will be caught and encapsulated in a [DebugFailure]
      * that will be returned. For panics, the failure is simply returned as such.
+     *
+     * If the root does not match the whole input, return the furthest encountered error.
+     * If this is not the desired behaviour, use [parsePrefix].
      */
     fun parse(): Result {
+        val r = parsePrefix()
+        if (pos < text.length - 1) return failure
+        else return r
+    }
+
+    /**
+     * Same as [parse], but allows the grammar root to match only a prefix of the input.
+     */
+    fun parsePrefix(): Result {
         grammar.initialize()
         return try { grammar.root.parse(this) }
         catch (p: Panic) { p.failure }

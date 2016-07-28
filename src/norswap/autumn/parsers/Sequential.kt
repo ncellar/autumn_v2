@@ -21,7 +21,7 @@ class Seq (vararg children: Parser): Parser(*children)
             val r = child.parse(ctx)
             if (r is Failure) {
                 ctx.restore(snapshot)
-                return r
+                return ctx.failure
             }
         }
         return Success
@@ -76,7 +76,7 @@ class Repeat (val n: Int, val child: Parser): Parser(child)
             val r = child.parse(ctx)
             if (r is Failure) {
                 ctx.restore(snapshot)
-                return r
+                return ctx.failure
             }
         }
         return Success

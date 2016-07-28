@@ -198,9 +198,16 @@ abstract class Parser (vararg val children: Parser)
      * See [Parser]. Implement through [invoke] preferably, or through [_parse_].
      */
     @Suppress("NOTHING_TO_INLINE")
-    inline fun parse(ctx: Context): Result {
+    inline fun parse(ctx: Context): Result
+    {
+        val fail = ctx.failure
+        ctx.failure = Success
         beforeParse(ctx)
-        return _parse_(ctx) after { afterParse(ctx, it) }
+        val r = _parse_(ctx)
+        val fail2 = Furthest.max(ctx.failure, r)
+        ctx.failure = Furthest.max(fail, fail2)
+        afterParse(ctx, r)
+        return r
     }
 
     /// Strings ------------------------------------------------------------------------------------
