@@ -5,6 +5,8 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.reflect.KClass
 
+// Miscellaneous utilities.
+
 // -------------------------------------------------------------------------------------------------
 
 /**
