@@ -9,7 +9,7 @@ open class Result internal constructor ()
     // ---------------------------------------------------------------------------------------------
 
     override fun toString() = when (this) {
-        is Failure -> "Failure: " + msg()
+        is Failure -> "Failure" + msg().let { if (it.isEmpty()) "" else ": $it" }
         else -> "Success"
     }
 
