@@ -94,13 +94,9 @@ class Around (val item: Parser, val sep: Parser): Parser(item, sep)
 {
     override fun _parse_(ctx: Context): Result
     {
-        val r = item.parse(ctx)
-        if (r is Success) {
-            while (true) {
-                val r2 = transact(ctx) { sep.parse(ctx) and { item.parse(ctx) } }
-                if (r2 is Failure) break;
-            }
-        }
+        var r = item.parse(ctx)
+        while (r is Success)
+            r = transact(ctx) { sep.parse(ctx) and { item.parse(ctx) } }
         return Success
     }
 }
@@ -115,14 +111,11 @@ class Around (val item: Parser, val sep: Parser): Parser(item, sep)
 class Around1 (val item: Parser, val sep: Parser): Parser(item, sep)
 {
     override fun _parse_(ctx: Context): Result {
-        val r = item.parse(ctx)
-        if (r is Success) {
-            while (true) {
-                val r2 = transact(ctx) { sep.parse(ctx) and { item.parse(ctx) } }
-                if (r2 is Failure) break;
-            }
-            return Success
-        } else return r
+        var r = item.parse(ctx)
+        if (r is Failure) return r
+        while (r is Success)
+            r = transact(ctx) { sep.parse(ctx) and { item.parse(ctx) } }
+        return Success
     }
 }
 
