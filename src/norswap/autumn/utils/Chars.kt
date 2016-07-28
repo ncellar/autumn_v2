@@ -23,7 +23,7 @@ fun Char.isExtendedAscii()
  * Encode the character to its hexadecimal representation (no prefix is included).
  */
 fun Char.hexEncode()
-    = String.format("%04x", this)
+    = String.format("%04x", this.toShort())
 
 // -------------------------------------------------------------------------------------------------
 
