@@ -20,9 +20,15 @@ abstract class Grammar
     /// SETTINGS ///////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The parser used to skip whitespace after matching a token or a [plusAssign] string.
+     * This parser is called by [whitespace] to do the actual whitespace parsing.
      */
-    open val whitespace: Parser = ZeroMore(CharPred(Char::isWhitespace))
+    open val whitespaceParser: Parser = ZeroMore(CharPred(Char::isWhitespace))
+
+    /**
+     * The parser used to skip whitespace after matching a token or a [plusAssign] string.
+     * Errors in the whitespace parsing logic are not recorded.
+     */
+    val whitespace: Parser by lazy { DontRecordFailures(whitespaceParser) }
 
     /**
      * Override this function to indicate which states are required to parse the grammar correctly.

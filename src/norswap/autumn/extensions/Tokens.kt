@@ -192,7 +192,6 @@ class TokenCheckParser (val type: Int, val info: Boolean, val grammar: TokenGram
         else if (token.value != null)
             ctx.stack.push(token.value)
 
-        // TODO unfix here to check furthest
         ctx.pos = token.wEnd
         return Success
     }

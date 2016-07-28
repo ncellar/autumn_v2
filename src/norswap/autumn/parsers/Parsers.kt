@@ -1,6 +1,7 @@
 package norswap.autumn.parsers
 import norswap.autumn.*
 import norswap.autumn.result.*
+import norswap.autumn.utils.dontRecordFailures
 import norswap.violin.Maybe
 import norswap.violin.stream.*
 import norswap.violin.utils.after
@@ -144,6 +145,15 @@ fun <T : Any> RightAssoc(child: Parser, assoc: (r: T, t: T) -> T) =
     } withDefiner "RightAssoc"
 
 /// Misc ///////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Matches [child], but don't track its internal failures to determine [Context.failure].
+ */
+class DontRecordFailures (val child: Parser): Parser(child)
+{
+    override fun _parse_(ctx: Context)
+        = ctx.dontRecordFailures { child.parse(ctx) }
+}
 
 /**
  * Delegates the parsing to [child]. Use to create an alias of [child] with a different name.
