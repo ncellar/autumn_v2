@@ -1,4 +1,5 @@
 package norswap.autumn
+import norswap.autumn.extensions.tokens.TokenCheckParser
 import norswap.autumn.result.*
 import norswap.autumn.utils.isMethod
 import norswap.violin.stream.*
@@ -15,6 +16,10 @@ fun parseTrace(parsers: Stream<Parser>): String
     val b = StringBuilder()
 
     parsers.each { parser ->
+
+        if (HIDE_TOKENS_IN_TRACE && parser is TokenCheckParser)
+            b.delete(0, b.length)
+
         b += "at $parser"
 
         if (DEBUG) {
