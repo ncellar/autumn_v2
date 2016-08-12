@@ -239,7 +239,7 @@ object Examply : Grammar()
         }
 
     val aMethodCall = postfix.withStack(false) {
-        parser.succeed(ctx) { get_() is MethodCall } }
+        parser.succeed(ctx) { get<Any>() is MethodCall } }
 
     val blockMethodCall = Seq(aMethodCall, blockCallSuffix)
         .build {
