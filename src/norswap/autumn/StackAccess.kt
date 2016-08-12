@@ -65,7 +65,7 @@ class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>, v
      * Uses [get] to retrieve an instance of [Maybe]`<List<T>>` and returns
      * the contained list if there is one, or an empty list instead.
      */
-    fun <T: Any> list(pos: Int = cur++): List<T>
+    fun <T: Any> maybeList(pos: Int = cur++): List<T>
          = get<Maybe<List<T>>>(pos)() ?: listOf<T>()
 
     /**
