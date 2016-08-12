@@ -4,6 +4,7 @@ import norswap.autumn.result.*
 import norswap.autumn.utils.isMethod
 import norswap.violin.stream.*
 import norswap.violin.link.stream
+import norswap.violin.utils.expr
 import norswap.violin.utils.plusAssign
 
 // -------------------------------------------------------------------------------------------------
@@ -23,11 +24,20 @@ fun parseTrace(parsers: Stream<Parser>): String
         b += "at $parser"
 
         if (DEBUG) {
-            b += "\n  defined\n      "
-            b += parser.definitionLocation()
-            b += "\n  constructed\n      "
-            b +=  parser.constructionLocation()
-            parser.useLocation() ?.let { b += "\n  used\n      $it" }
+            if (SHOW_EXTRA_LOCATIONS) {
+                b += "\n  defined\n      "
+                b += parser.definitionLocation()
+                b += "\n  constructed\n      "
+                b +=  parser.constructionLocation()
+                parser.useLocation()
+                    ?.let { b += "\n  used\n      $it" }
+            }
+            else {
+                parser.useLocation()
+                    ?.let { b += "\n  $it" }
+                    ?: expr { b += "\n  ${parser.constructionLocation()}" }
+            }
+
         }
 
         b += "\n"

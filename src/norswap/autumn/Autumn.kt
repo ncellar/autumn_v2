@@ -9,6 +9,17 @@ import norswap.autumn.extensions.tokens.TokenGrammar
 var DEBUG = false
 
 /**
+ * If true, [trace] shows three locations:
+ *
+ * 1. the location where the parser is defined
+ * 2. the location where it is instantiated
+ * 3. the location where the parser is used within the grammar
+ *
+ * Otherwise, only (3) is shown if [DEBUG], else only (2).
+ */
+var SHOW_EXTRA_LOCATIONS = false
+
+/**
  * If true, hides all parser below the token level in traces ([trace]) when using a
  * [TokenGrammar].
  */
