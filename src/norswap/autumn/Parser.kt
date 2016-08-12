@@ -2,7 +2,6 @@ package norswap.autumn
 import norswap.autumn.result.*
 import norswap.autumn.utils.isMethod
 import norswap.autumn.utils.clickableString
-import norswap.violin.utils.after
 import norswap.autumn.utils.rangeTo
 import norswap.autumn.utils.stream
 import norswap.violin.stream.filter
@@ -204,8 +203,7 @@ abstract class Parser (vararg val children: Parser)
         ctx.failure = Success
         beforeParse(ctx)
         val r = _parse_(ctx)
-        val fail2 = Furthest.max(ctx.failure, r)
-        ctx.failure = Furthest.max(fail, fail2)
+        ctx.failure = Furthest.max(ctx.failure, r, fail)!!
         afterParse(ctx, r)
         return r
     }

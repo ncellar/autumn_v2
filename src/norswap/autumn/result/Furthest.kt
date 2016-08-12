@@ -22,4 +22,13 @@ object Furthest: Comparator<Result>
      */
     fun <T: Result> max(a: T, b: T): T
         = if (compare(a, b) >= 0) a else b
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Returns the result with the furthest failure position.
+     * See the binary overload for tie-breaking.
+     */
+    fun <T: Result> max (vararg res: T): T?
+        = res.maxWith(this)
 }
