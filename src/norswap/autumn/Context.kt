@@ -6,6 +6,7 @@ import norswap.autumn.state.Position
 import norswap.autumn.utils.dontRecordFailures
 import norswap.violin.link.LinkList
 import norswap.violin.stream.*
+import norswap.violin.utils.after
 import java.io.PrintStream
 import kotlin.reflect.KClass
 
@@ -140,7 +141,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      */
     fun parse(): Result {
         val r = parsePrefix()
-        if (pos < text.length - 1) return failure
+        if (r is Success && pos < text.length - 1) return failure
         else return r
     }
 
