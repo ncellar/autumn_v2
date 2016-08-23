@@ -341,35 +341,48 @@ fun Binary(left: Parser, vararg right: Parser)
  */
 data class ChoiceBuilder (val list: MutableList<Parser>)
 {
+    var commited = false
+
     /**
      * Turn this builder into a [Choice] instance.
      */
     val choice: Parser
-        get() = Choice(*list.toTypedArray())
+        get() {
+            commited = true
+            return Choice(*list.toTypedArray())
+        }
 
     /**
      * Turn this builder into a [Longest] instance.
      */
     val longest: Parser
-        get() = Longest(*list.toTypedArray())
+        get() {
+            commited = true
+            return Longest(*list.toTypedArray())
+        }
+
+    fun check() {
+        if (commited)
+            throw Exception("Trying to mutate a choice builder after it as been used to build a choice.")
+    }
 
     operator fun div (right: Parser)
-        = this.after { list.add(right) }
+        = this.after { check() ; list.add(right) }
 
     /**
      * Synonymous to [div], but used to emphasize ordering.
      */
     operator fun mod (right: Parser)
-        = this.after { list.add(right) }
+        = this.after { check() ; list.add(right) }
 
     operator fun div (right: ChoiceBuilder)
-        = this.after { list.addAll(right.list) }
+        = this.after { check() ; list.addAll(right.list) }
 
     /**
      * Synonymous to [div], but used to emphasize ordering.
      */
     operator fun mod (right: ChoiceBuilder)
-        = this.after { list.addAll(right.list) }
+        = this.after { check() ; list.addAll(right.list) }
 }
 
 /**
@@ -403,17 +416,27 @@ operator fun Parser.mod (right: ChoiceBuilder)
  */
 data class SeqBuilder (val list: MutableList<Parser>)
 {
+    var commited = false
+
     /**
      * Turn this builder into a [Seq] instance.
      */
     val seq: Parser
-        get() = Seq(*list.toTypedArray())
+        get() {
+            commited = true
+            return Seq(*list.toTypedArray())
+        }
+
+    fun check() {
+        if (commited)
+            throw Exception("Trying to mutate a seq builder after it as been used to build a sequence.")
+    }
 
     operator fun rangeTo (right: Parser)
-        = this.after { list.add(right) }
+        = this.after { check() ; list.add(right) }
 
     operator fun rangeTo (right: SeqBuilder)
-        = this.after { list.addAll(right.list) }
+        = this.after { check() ; list.addAll(right.list) }
 }
 
 /**
