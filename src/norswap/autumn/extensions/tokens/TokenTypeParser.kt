@@ -20,13 +20,15 @@ class TokenTypeParser (
     val grammar: Grammar)
 : Parser(target)
 {
-    override fun _parse_(ctx: Context): Result {
+    override fun _parse_(ctx: Context): Result
+    {
         val pos = ctx.pos
         val result = target.parse(ctx)
         if (result is Success) {
             val end = ctx.pos
+            val v = value(ctx.textFrom(pos))
             grammar.whitespace.parse(ctx)
-            val token = Token(type, pos, end, ctx.pos, value(ctx.textFrom(pos)))
+            val token = Token(type, pos, end, ctx.pos, v)
             ctx.stack.push(token)
         }
         return result
