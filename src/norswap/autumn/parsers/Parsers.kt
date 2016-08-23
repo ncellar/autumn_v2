@@ -120,7 +120,7 @@ fun BuildMaybe (child: Parser)
  * Same as [Opt] but pushes a boolean on the stack depending on whether the parser matched.
  */
 fun AsBool (child: Parser) = Parser (child) { ctx ->
-    child.parse(ctx) or { Success } after { ctx.stack.push(it == Success) }
+    child.parse(ctx) after { ctx.stack.push(it == Success) } or { Success }
 }
 
 /**
