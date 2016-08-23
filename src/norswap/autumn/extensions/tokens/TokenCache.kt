@@ -7,6 +7,8 @@ import norswap.violin.utils.plusAssign
 /**
  * Memoizes matched tokens by input position.
  * This is optional and must be added to the [Context] to be used.
+ *
+ * This is an [InertState], as the fact a token is cached or not never influences the parse.
  */
 class TokenCache(val map: MutableMap<Int, Token<*>> = mutableMapOf())
 : InertState<TokenCache>, MutableMap<Int, Token<*>> by map

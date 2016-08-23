@@ -13,10 +13,10 @@ import norswap.autumn.parsers.orFail
  * must be resolved at the lexical level). Users can register new token types with the [token]
  * function, which returns a parser.
  *
- * All parsers returned by [token] determine the type of token (if any) present at the given input
- * position. If multiple types of tokens could match, they are disambiguated through a
- * [TokenDisambiguation] method. The parser then checks if the matched token is of the required
- * type. If so, it pushes a [Token] value onto [Context.stack].
+ * All parsers returned by [token] (type  [TokenCheckParser]) determine the type of token (if any)
+ * present at the given input position. If multiple types of tokens could match, they ar
+ * disambiguated through a [TokenDisambiguation] method. The parser then checks if the matched
+ * token is of the required type. If so, it pushes a [Token] value onto [Context.stack].
  *
  * You can enable caching for tokens by passing a [TokenCache] to the [Context].
  */
@@ -52,6 +52,8 @@ abstract class TokenGrammar: Grammar()
      */
     internal var checkParsers = mutableListOf<TokenCheckParser>()
 
+    // ---------------------------------------------------------------------------------------------
+
     override fun initialize() {
         super.initialize()
         val msg = "Could not match any token"
@@ -61,6 +63,8 @@ abstract class TokenGrammar: Grammar()
             TokenDisambiguation.ORDERING -> Choice(*array).orFail { failure(it) { msg } }
             TokenDisambiguation.LONGEST_MATCH -> Longest(*array).orFail { failure(it) { msg } }
         }   }
+
+    // ---------------------------------------------------------------------------------------------
 
     /**
      * Returns a parser for a token whose syntax is defined by this parser and whose value
@@ -77,6 +81,8 @@ abstract class TokenGrammar: Grammar()
         checkParsers.add(checkParser)
         return checkParser
     }
+
+    // ---------------------------------------------------------------------------------------------
 
     /**
      * Sugar for `this.token { it }`.

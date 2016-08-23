@@ -8,10 +8,29 @@ import norswap.autumn.Context
  * value (as determined by [Grammar.token]).
  */
 data class Token<out T: Any> (
+    /**
+     * Token type, this is used to distinguish between the tokens used in the grammar.
+     */
     val type: Int,
+
+    /**
+     * Token start position.
+     */
     val start: Int,
+
+    /**
+     * Position past the token, whitespace excluded.
+     */
     val end: Int,
+
+    /**
+     * Position past the token, whitespace included.
+     */
     val wEnd: Int,
+
+    /**
+     * Derived token value.
+     */
     val value: T?)
 {
     /**
