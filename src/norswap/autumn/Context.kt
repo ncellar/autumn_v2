@@ -6,7 +6,6 @@ import norswap.autumn.state.Position
 import norswap.autumn.utils.dontRecordFailures
 import norswap.violin.link.LinkList
 import norswap.violin.stream.*
-import norswap.violin.utils.after
 import java.io.PrintStream
 import kotlin.reflect.KClass
 
@@ -139,16 +138,24 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * If the root does not match the whole input, return the furthest encountered error.
      * If this is not the desired behaviour, use [parsePrefix].
      */
-    fun parse(): Result {
-        val r = parsePrefix()
-        if (r is Success && pos < text.length - 1) return failure
-        else return r
+    fun parse(): Result
+    {
+        var r = parsePrefix()
+
+        if (r is Success && pos < text.length - 1)
+            if (failure is Failure && (failure as Failure).pos >= pos)
+                r = failure
+            else
+                r = grammar.root.failure(this) { "Input remaining, matched up to $posStr" }
+
+        return r
     }
 
     /**
      * Same as [parse], but allows the grammar root to match only a prefix of the input.
      */
-    fun parsePrefix(): Result {
+    fun parsePrefix(): Result
+    {
         grammar.initialize()
         return try { grammar.root.parse(this) }
         catch (p: Panic) { p.failure }
