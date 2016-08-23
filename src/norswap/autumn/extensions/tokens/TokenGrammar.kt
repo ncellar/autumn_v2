@@ -101,4 +101,13 @@ abstract class TokenGrammar: Grammar()
      */
     val String.token: Parser
         get() = Str(this).token { it }
+
+    // ---------------------------------------------------------------------------------------------
+
+    fun parserName(type: Int): String
+    {
+        assert(type < checkParsers.size)
+        return checkParsers[type].name
+            ?: typeParsers[type].fullString()
+    }
 }

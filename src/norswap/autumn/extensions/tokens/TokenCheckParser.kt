@@ -21,12 +21,8 @@ class TokenCheckParser (val type: Int, val info: Boolean, val grammar: TokenGram
         if (token.type != type) {
             ctx.pos = pos
             return failure(ctx) {
-                val expected
-                    =  this.name
-                    ?: grammar.typeParsers[type].fullString()
-                val actual
-                    =  grammar.checkParsers[token.type].name
-                    ?: grammar.typeParsers[type].fullString()
+                val expected = grammar.parserName(type)
+                val actual   = grammar.parserName(token.type)
 
                 "Expected token type [$expected] but got [$actual] instead"
             }
