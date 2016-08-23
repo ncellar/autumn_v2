@@ -130,14 +130,14 @@ fun <T: Any> Collect (child: Parser)
     = Build(child) { rest<T>() } withDefiner "Collect"
 
 /**
- * Invokes[child] and, if successful, pops an item of type [T] and a list of [T]s from
+ * Invokes [child] and, if successful, pops an item of type [T] and a list of [T]s from
  * [Context.stack], then uses the [assoc] function to build a right associative structure
  * from these items. If the list is empty, returns the item directly. The right branch of the
  * structure is the left parameter (named r = result).
  *
  * example: `Binary(expr, +"=", expr).leftAssoc<Expr> { r, t -> Assign(r, t) }`
  */
-fun <T : Any> RightAssoc(child: Parser, assoc: (r: T, t: T) -> T) =
+fun <T : Any> RightAssoc (child: Parser, assoc: (r: T, t: T) -> T) =
     child.build {
         val list: List<T> = get(1)
         if (list.isEmpty()) get(0)
