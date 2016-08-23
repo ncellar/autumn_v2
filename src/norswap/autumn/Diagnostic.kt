@@ -12,16 +12,18 @@ import norswap.violin.utils.plusAssign
 /**
  * Returns a string describing the chain of parser invocations described by [parsers].
  */
-fun parseTrace(parsers: Stream<Parser>): String
+fun parseTrace(ctx: Context, parsers: Stream<Pair<Parser, Int>>): String
 {
     val b = StringBuilder()
 
-    parsers.each { parser ->
+    parsers.each {
+
+        val (parser, pos) = it
 
         if (HIDE_TOKENS_IN_TRACE && parser is TokenCheckParser)
             b.delete(0, b.length)
 
-        b += "at $parser"
+        b += "at $parser (${ctx.posToString(pos)})"
 
         if (DEBUG) {
             if (SHOW_EXTRA_LOCATIONS) {
@@ -52,7 +54,7 @@ fun parseTrace(parsers: Stream<Parser>): String
  * Returns a string describing the failure as well as the chain of parser invocations
  * (and in the case of exceptions, function calls) leading to it.
  */
-fun trace(f: DebugFailure): String
+fun trace(ctx: Context, f: DebugFailure): String
 {
     val b = StringBuilder()
 
@@ -78,7 +80,7 @@ fun trace(f: DebugFailure): String
             .each { b += "  at $it\n" }
     }
 
-    b += parseTrace(f.trace.stream()).prependIndent("  ")
+    b += parseTrace(ctx, f.trace.stream()).prependIndent("  ")
 
     return b.toString()
 }
@@ -97,7 +99,7 @@ fun diagnostic(ctx: Context, result: Result): String
 {
     val b = StringBuilder()
     if (result is DebugFailure) {
-        b += trace(result)
+        b += trace(ctx, result)
         b += "\n"
         b += result.snapshot.toString(ctx)
     }

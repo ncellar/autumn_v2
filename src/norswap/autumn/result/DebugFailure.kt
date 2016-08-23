@@ -9,11 +9,11 @@ import norswap.violin.link.Link
  * It is also returned by [Context.parse] (independently of [DEBUG]) if the  parser throws
  * an error (but not a panic).
  */
-class DebugFailure(
+class DebugFailure constructor(
     pos: Int,
     parser: Parser,
     msg: () -> String,
-    trace: Link<Parser>?,
+    trace: Link<Pair<Parser, Int>>?,
     snapshot: Snapshot,
     cause: Throwable? = null
 )

@@ -145,7 +145,7 @@ abstract class Parser (vararg val children: Parser)
      */
     fun beforeParse(ctx: Context) {
         if (DEBUG) {
-            ctx.trace.push(this)
+            ctx.trace.push(this to ctx.pos)
             ctx.debugTraceBeforeHook(ctx, this)
         }
 
@@ -248,7 +248,7 @@ abstract class Parser (vararg val children: Parser)
         return if (!DEBUG)
             Failure(ctx.pos, this, msg, e)
         else
-            DebugFailure(ctx.pos, ctx.trace.peek()!!, msg, ctx.trace.link, ctx.snapshot(), e)
+            DebugFailure(ctx.pos, ctx.trace.peek()!!.first, msg, ctx.trace.link, ctx.snapshot(), e)
     }
 
     /// Utilities ----------------------------------------------------------------------------------

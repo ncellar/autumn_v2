@@ -103,9 +103,9 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     var logStream: PrintStream = System.out
 
     /**
-     * A stack of parsers whose invocation is ongoing, recorded if [debug] is true.
+     * A stack of parsers (+ position) whose invocation is ongoing, recorded if [DEBUG] is true.
      */
-    val trace = LinkList<Parser>()
+    val trace = LinkList<Pair<Parser, Int>>()
 
     internal val dbg = Parser.LogState()
     internal val states: List<State<*,*>>
@@ -223,12 +223,12 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
         = logStream.println(msg)
 
     /**
-     * If [debug] is true, prints a parse trace (using [trace]) to [logStream].
+     * If [DEBUG] is true, prints a parse trace (using [trace]) to [logStream].
      */
     fun logTrace() {
-        val parser = if (DEBUG) trace.peek()!! else grammar.root
-        val failure = DebugFailure(pos, parser, {""}, trace.link, snapshot())
-        val trace = trace(failure)
+        if (!DEBUG) return
+        val failure = DebugFailure(pos, trace.peek()!!.first, {""}, trace.link, snapshot())
+        val trace = trace(this, failure)
         logStream.println("Trace\n" + trace.removeRange(0..trace.indexOf('\n')))
     }
 
