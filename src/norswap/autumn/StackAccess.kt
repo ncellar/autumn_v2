@@ -23,7 +23,11 @@ import norswap.violin.stream.*
  *
  * Within Autumn, StackAccess is used as the receiver and to the callback passed to [Grammar.build].
  */
-class StackAccess(val ctx: Context, val parser: Parser, val stack: Stack<Any>, val pop: Boolean)
+class StackAccess(
+    val ctx: Context,
+    val parser: Parser,
+    val pop: Boolean,
+    val stack: Stack<Any> = ctx.stack)
 {
     private val size0: Int
     init { size0 = stack.size }

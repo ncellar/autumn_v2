@@ -76,7 +76,7 @@ fun DoWithMatchString (child: Parser, f: Parser.(Context, String) -> Unit)
  */
 fun WithStack (child: Parser, pop: Boolean = true, f: StackAccess.() -> Result) =
     Parser(child) { ctx ->
-        val stack = StackAccess(ctx, this, ctx.stack, pop)
+        val stack = StackAccess(ctx, this, pop)
         child.parse(ctx) and { stack.prepareAccess() ; stack.f() }
     }
 
@@ -85,7 +85,7 @@ fun WithStack (child: Parser, pop: Boolean = true, f: StackAccess.() -> Result) 
  */
 fun DoWithStack (child: Parser, pop: Boolean = true, f: StackAccess.() -> Unit) =
     Parser(child) { ctx ->
-        val stack = StackAccess(ctx, this, ctx.stack, pop)
+        val stack = StackAccess(ctx, this, pop)
         child.parse(ctx) andDo { stack.prepareAccess() ; stack.f() }
     }
 
@@ -95,7 +95,7 @@ fun DoWithStack (child: Parser, pop: Boolean = true, f: StackAccess.() -> Unit) 
  * popped from the stack.
  */
 fun Build (child: Parser, node: StackAccess.() -> Any) = Parser(child) { ctx ->
-    val stack = StackAccess(ctx, this, ctx.stack, true)
+    val stack = StackAccess(ctx, this, pop = true)
     child.parse(ctx)
         .andDo { stack.prepareAccess() ; stack.push(stack.node()) }
 }
