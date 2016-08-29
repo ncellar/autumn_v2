@@ -118,9 +118,12 @@ fun BuildMaybe (child: Parser)
 
 /**
  * Same as [Opt] but pushes a boolean on the stack depending on whether the parser matched.
+ * All items that [child] may have pushed on the stack are popped from it.
  */
 fun AsBool (child: Parser) = Parser (child) { ctx ->
-    child.parse(ctx) after { ctx.stack.push(it == Success) } or { Success }
+    val stack = StackAccess(ctx, this, pop = true)
+    val res = child.parse(ctx) andDo { stack.prepareAccess() }
+    res after { ctx.stack.push(it == Success) } or { Success }
 }
 
 /**
