@@ -3,8 +3,8 @@ import norswap.autumn.Grammar
 import norswap.autumn.Parser
 import norswap.autumn.parsers.Choice
 import norswap.autumn.parsers.Longest
+import norswap.autumn.parsers.OrFail
 import norswap.autumn.parsers.Str
-import norswap.autumn.parsers.orFail
 
 /**
  * Adds lexical analysis (tokenization) emulation to [Grammar].
@@ -60,8 +60,8 @@ abstract class TokenGrammar: Grammar()
         val array = typeParsers.toTypedArray()
 
         tokenParser = when (tokenDisambiguation) {
-            TokenDisambiguation.ORDERING -> Choice(*array).orFail { failure(it) { msg } }
-            TokenDisambiguation.LONGEST_MATCH -> Longest(*array).orFail { failure(it) { msg } }
+            TokenDisambiguation.ORDERING -> OrFail(Choice(*array)) { failure(it) { msg } }
+            TokenDisambiguation.LONGEST_MATCH -> OrFail(Longest(*array)) { failure(it) { msg } }
         }   }
 
     // ---------------------------------------------------------------------------------------------
