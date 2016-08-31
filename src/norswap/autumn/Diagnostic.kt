@@ -36,7 +36,7 @@ fun parseTrace(ctx: Context, parsers: Stream<Pair<Parser, Int>>): String
             }
             else {
                 parser.useLocation()
-                    ?.let { b += "\n  $it" }
+                    ?. let  { b += "\n  $it" }
                     ?: expr { b += "\n  ${parser.constructionLocation()}" }
             }
 
@@ -98,17 +98,22 @@ fun trace(ctx: Context, f: DebugFailure): String
 fun diagnostic(ctx: Context, result: Result): String
 {
     val b = StringBuilder()
+
     if (result is DebugFailure) {
         b += trace(ctx, result)
         b += "\n"
         b += result.snapshot.toString(ctx)
     }
+
     else if (result is Failure)
         b += result
+
     else if (ctx.pos >= ctx.text.length - 1)
         b += "Success (full match)"
+
     else
         b += "Success up to ${ctx.posStr} (EOF at ${ctx.posToString(ctx.text.length - 1)})"
+
     return b.toString()
 }
 
