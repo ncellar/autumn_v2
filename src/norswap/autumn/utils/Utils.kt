@@ -1,6 +1,7 @@
 package norswap.autumn.utils
 import norswap.violin.stream.*
 import norswap.violin.stream.stream
+import norswap.violin.utils.plusAssign
 import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.reflect.KClass
@@ -14,24 +15,45 @@ import kotlin.reflect.KClass
  * brings the column (counted from 0 starting at each newline) to a multiple of [tabSize].
  */
 // Courtesy of http://stackoverflow.com/a/34933524/298664
-fun String.expandTabs(tabSize: Int): String {
-    val buf = StringBuilder()
+fun String.expandTabsToBuilder(tabSize: Int): StringBuilder
+{
+    val b = StringBuilder()
     var col = 0
     for (c in this) when (c) {
         '\n' -> {
-            buf.append(c)
+            b += c
             col = 0
         }
         '\t' -> {
             val spaces = tabSize - col % tabSize
-            repeat(spaces) { buf.append(" ") }
+            repeat(spaces) { b += " " }
             col += spaces
         }
         else -> {
-            buf.append(c)
+            b += c
             ++col
     }   }
-    return buf.toString()
+    return b
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Returns a version of this string where all tabs have been fully expanded, so that each tab
+ * brings the column (counted from 0 starting at each newline) to a multiple of [tabSize].
+ */
+fun String.expandTabs(tabSize: Int): String
+    = expandTabsToBuilder(tabSize).toString()
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Expands tabs (like [expandTabs]) and add a null character at the end.
+ */
+fun String.expandTabsAndNullTerminate(tabSize: Int): String {
+    val b = expandTabsToBuilder(tabSize)
+    b += '\u0000'
+    return b.toString()
 }
 
 // -------------------------------------------------------------------------------------------------

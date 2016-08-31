@@ -4,6 +4,7 @@ import norswap.autumn.result.*
 import norswap.autumn.state.FurthestFailure
 import norswap.autumn.state.Position
 import norswap.autumn.utils.dontRecordFailures
+import norswap.autumn.utils.expandTabsAndNullTerminate
 import norswap.violin.link.LinkList
 import norswap.violin.stream.*
 import java.io.PrintStream
@@ -49,7 +50,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     /**
      * The input string, null-terminated.
      */
-    val text: String = input + "\u0000"
+    val text: String = input.expandTabsAndNullTerminate(TAB_SIZE)
 
     /**
      * Syntactic sugar for `this.text.substring(origin, this.pos)`.

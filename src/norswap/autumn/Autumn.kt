@@ -24,3 +24,8 @@ var SHOW_EXTRA_LOCATIONS = false
  * [TokenGrammar].
  */
 var HIDE_TOKENS_IN_TRACE: Boolean = true
+
+/**
+ * Size of tabs, used to display text positions.
+ */
+var TAB_SIZE = 4
