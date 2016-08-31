@@ -69,7 +69,7 @@ class Chill (val child: Parser, val pred: (Failure) -> Boolean = { true }): Pars
 /**
  * Matches [child], else raises the failure returned by [f].
  */
-class OrFail(val child: Parser, val f: Parser.(Context) -> Failure):  Parser(child)
+class OrFail (val child: Parser, val f: Parser.(Context) -> Failure):  Parser(child)
 {
     override fun _parse_(ctx: Context)
         = child.parse(ctx) or { f(ctx) }

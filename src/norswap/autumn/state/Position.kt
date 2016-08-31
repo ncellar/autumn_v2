@@ -16,7 +16,6 @@ internal class Position (val ctx: Context): State<Int, Int>
 
     override fun merge(delta: Int) {
         ctx.pos = delta
-
     }
 
     override fun equiv(pos: Int, snap: Int)
