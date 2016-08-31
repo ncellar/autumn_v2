@@ -1,6 +1,7 @@
 @file:Suppress("UNCHECKED_CAST")
 import norswap.autumn.*
 import norswap.autumn.parsers.*
+import norswap.autumn.syntax.*
 import norswap.autumn.result.Success
 import norswap.autumn.utils.*
 import norswap.violin.*
@@ -14,6 +15,11 @@ object Examply : Grammar()
     override fun requiredStates() = listOf(IndentMap(), IndentStack(), TypeStack())
 
     /// "LEXICAL" //////////////////////////////////////////////////////////////////////////////////
+
+    val any         = AnyChar()
+    val alpha       = Alpha()
+    val alphaNum    = AlphaNum()
+    val digit       = Digit()
 
     val iden = Seq(alpha, alphaNum.repeat)
         .atom { it }
@@ -199,8 +205,15 @@ object Examply : Grammar()
 
     val additive = !Choice(sum, diff, postfix)
 
-    val assign = Binary(additive, +"=", additive)
-        .rightAssoc<Expr> { r, t -> Assign(t, r) }
+    val assignSuffix
+        = Seq(+"=", !"assign")
+        .build { Assign(stack.pop() as Expr, get()) }
+
+    val assign
+        = Seq(additive, assignSuffix.opt)
+
+    // val assign = Seq(additive, ZeroMore(Seq(+"=", additive)).collect)
+    //    .rightAssoc<Expr> { acc, item -> Assign(item, acc) }
 
     val expr = !assign
 
@@ -304,7 +317,7 @@ object Examply : Grammar()
     val classes = `class`.repeat
         .collect<Class>()
 
-    override val root = Scoped(Seq(whitespace, buildIndentMap, imports, classes, eof))
+    override val root = Scoped(Seq(whitespace, buildIndentMap, imports, classes))
         .build { File(get(), get()) }
 }
 

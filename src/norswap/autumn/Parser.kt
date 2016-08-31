@@ -39,7 +39,7 @@ import norswap.violin.stream.filter
  *
  * TODO write and link said guidelines
  *
- * See `com/norswap/autumn/Parsers.kt` for examples.
+ * See `com/norswap/autumn/parsers` for examples.
  *
  * # Contract
  *
@@ -70,7 +70,7 @@ import norswap.violin.stream.filter
  * is either the class name if subclassing directly, or the name of the function that holds the
  * [Parser.invoke] call.
  */
-abstract class Parser (vararg val children: Parser)
+abstract class Parser (vararg val children: Parser): ParserBuilder
 {
     companion object {
         private val inlinedSuffix = Regex("\\\$\\\$inlined\\\$invoke\\\$\\d+\$")
@@ -308,4 +308,8 @@ abstract class Parser (vararg val children: Parser)
         val inlined = inlinedSuffix.find(lineage[1].className) != null
         return "at " + lineage[inlined .. 3 ?: 2]
     }
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun build() = this
 }
