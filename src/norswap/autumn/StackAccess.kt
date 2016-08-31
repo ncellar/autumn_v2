@@ -1,7 +1,10 @@
 package norswap.autumn
+import norswap.autumn.result.*
 import norswap.violin.Maybe
 import norswap.violin.Stack
 import norswap.violin.stream.*
+
+// =================================================================================================
 
 /**
  * This class gives a parser (the consumer) access to the nodes pushed on [stack] by another
@@ -33,6 +36,16 @@ class StackAccess(
     init { size0 = stack.size }
     lateinit var items: List<Any>
 
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Position recorded when the stack access is created (in predefined parsers, always before
+     * invoking any children).
+     */
+    val start = ctx.pos
+
+    // ---------------------------------------------------------------------------------------------
+
     /**
      * Called before the StackAccess is passed to the user.
      */
@@ -44,10 +57,21 @@ class StackAccess(
             .asReversed()
     }
 
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * The string matched by [parser].
+     */
+    val str by lazy { ctx.textFrom(start) }
+
+    // ---------------------------------------------------------------------------------------------
+
     /**
      * The index of the next item in the stack to be returned by [get].
      */
     var cur = 0
+
+    // ---------------------------------------------------------------------------------------------
 
     /**
      * Retrieve the item at the specified index (default: [cur]++).
@@ -58,12 +82,16 @@ class StackAccess(
         = items.getOrNull(i) as T?
         ?: throw Error("No items at index $i (only ${items.size} items available)")
 
+    // ---------------------------------------------------------------------------------------------
+
     /**
      * Uses [get] to retrieve an instance of [Maybe]`<T>` and returns
      * a corresponding nullable (through [Maybe.invoke]).
      */
     fun <T: Any> maybe(pos: Int = cur++): T?
         = get<Maybe<T>>(pos)()
+
+    // ---------------------------------------------------------------------------------------------
 
     /**
      * Uses [get] to retrieve an instance of [Maybe]`<List<T>>` and returns
@@ -72,6 +100,8 @@ class StackAccess(
     fun <T: Any> maybeList(pos: Int = cur++): List<T>
          = get<Maybe<List<T>>>(pos)() ?: listOf<T>()
 
+    // ---------------------------------------------------------------------------------------------
+
     /**
      * Returns the remaining items as a list of the specified type.
      */
@@ -79,10 +109,14 @@ class StackAccess(
     fun <T: Any> rest(): List<T>
         = items.subList(cur, items.size) as List<T>
 
+    // ---------------------------------------------------------------------------------------------
+
     /**
      * Push an item on the stack.
      */
     fun push(item: Any) { stack.push(item) }
+
+    // ---------------------------------------------------------------------------------------------
 
     /**
      * Ensures that all items pushed on the stack by the receiver are popped.
@@ -91,3 +125,24 @@ class StackAccess(
         if (!pop) repeat(stack.size - size0) { stack.pop() }
     }
 }
+
+// =================================================================================================
+
+inline fun withStack (
+    ctx: Context,
+    parser: Parser,
+    child: Parser,
+    pop: Boolean = true,
+    f: StackAccess.() -> Unit)
+: Result
+{
+    val stack = StackAccess(ctx, parser, pop)
+    val result = child.parse(ctx)
+    if (result is Success) {
+        stack.prepareAccess()
+        stack.f()
+    }
+    return result
+}
+
+// =================================================================================================
