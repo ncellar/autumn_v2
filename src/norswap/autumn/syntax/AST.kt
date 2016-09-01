@@ -1,72 +1,58 @@
 package norswap.autumn.syntax
 import norswap.autumn.Parser
+import norswap.autumn.ParserBuilder
 import norswap.autumn.StackAccess
 import norswap.autumn.parsers.*
 import norswap.autumn.result.Result
+import norswap.autumn.result.Success
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [WithStack].
  */
-fun Parser.withStack (pop: Boolean = true, node: StackAccess.() -> Result)
-    = WithStack(this, pop, node)
+fun ParserBuilder.withStack (backargs: Int = 0, pop: Boolean = true, node: StackAccess.() -> Result)
+    = WithStack(this.build(), backargs, pop, node)
 
 // -------------------------------------------------------------------------------------------------
 
 /**
- * See [DoWithStack].
+ * Like [withStack], except that it always succeeds if the receiver succeeds.
  */
-fun Parser.doWithStack (pop: Boolean = true, node: StackAccess.() -> Unit)
-    = DoWithStack(this, pop, node)
+inline fun ParserBuilder.doWithStack (backargs: Int = 0, pop: Boolean = true, crossinline f: StackAccess.() -> Unit)
+    = WithStack(this.build(), backargs, pop) { f() ; Success }
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [Build].
  */
-infix fun Parser.build (node: StackAccess.() -> Any)
-    = Build(this, node)
-
-// -------------------------------------------------------------------------------------------------
-
-/**
- * See [Leaf].
- */
-infix fun Parser.leaf (node: (String) -> Any)
-    = Leaf(this, node)
-
-// -------------------------------------------------------------------------------------------------
-
-/**
- * Sugar for [Leaf]`(this, {it})`
- */
-val Parser.leaf: Parser
-    get() = Leaf(this, {it})
+fun ParserBuilder.build (backargs: Int = 0, node: StackAccess.() -> Any)
+    = Build(this.build(), backargs, node)
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [BuildMaybe].
  */
-val Parser.maybe: Parser
-    get() = BuildMaybe(this)
+val ParserBuilder.maybe: Parser
+    get() = BuildMaybe(this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [AsBool].
  */
-val Parser.asBool: Parser
-    get() = AsBool(this)
+val ParserBuilder.asBool: Parser
+    get() = AsBool(this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [Collect].
  */
-fun <T: Any> Parser.collect ()
-    = Collect<T>(this)
+fun <T: Any> ParserBuilder.collect (backargs: Int = 0)
+    = Collect<T>(this.build(), backargs)
 
 // -------------------------------------------------------------------------------------------------
 
@@ -76,15 +62,15 @@ fun <T: Any> Parser.collect ()
  * In Collect, T = Any, but as this type is erased, the list that is pushed on stack can be cast
  * to the proper type without hurdle.
  */
-val Parser.collect: Parser
-    get() = Collect<Any>(this)
+val ParserBuilder.collect: Parser
+    get() = Collect<Any>(this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [BuildPair].
  */
-val Parser.pair: Parser
-    get() = BuildPair(this)
+val ParserBuilder.pair: Parser
+    get() = BuildPair(this.build())
 
 // -------------------------------------------------------------------------------------------------

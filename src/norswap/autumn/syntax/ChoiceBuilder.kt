@@ -19,7 +19,7 @@ data class ChoiceBuilder (val list: MutableList<Parser>): ParserBuilder
 
     // ---------------------------------------------------------------------------------------------
 
-    override fun build (): Parser
+    override fun build (): Choice
     {
         if (commited)
             throw Exception("Trying to build a choice builder more than once.")
@@ -31,20 +31,14 @@ data class ChoiceBuilder (val list: MutableList<Parser>): ParserBuilder
     // ---------------------------------------------------------------------------------------------
 
     // TODO
-    operator fun div (right: Parser): ChoiceBuilder
+    operator fun div (right: ParserBuilder): ChoiceBuilder
     {
         if (commited)
             throw Exception("Trying to mutate a choice builder after it has been built.")
 
-        list.add(right)
+        list.add(right.build())
         return this
     }
-
-    // ---------------------------------------------------------------------------------------------
-
-    // TODO kill
-    val choice: Parser
-        get() = build()
 }
 
 // =================================================================================================
@@ -53,16 +47,36 @@ data class ChoiceBuilder (val list: MutableList<Parser>): ParserBuilder
  * Constructs a new [ChoiceBuilder] initially containing
  * a parser built from the received and [right].
  */
-operator fun ParserBuilder.div (right: Parser)
-    = ChoiceBuilder(mutableListOf(this.build(), right))
+operator fun ParserBuilder.div (right: ParserBuilder)
+    = ChoiceBuilder(mutableListOf(this.build(), right.build()))
+
+// =================================================================================================
+
+class ChoiceBuilderEnv
+{
+    val builder = ChoiceBuilder(mutableListOf())
+
+    inline fun or (clause: () -> ParserBuilder): ChoiceBuilder
+        = builder / clause()
+}
+
+// =================================================================================================
+
+/**
+ * Builds a [Choice] out of the supplied ChoiceBuilder.
+ * This is just an alias for [rule] applying only to choices.
+ */
+inline fun choice (body: ChoiceBuilderEnv.() -> ChoiceBuilder): Choice
+    = ChoiceBuilderEnv().body().build()
 
 // =================================================================================================
 
 /**
  * Build a [Longest] parser out of the supplied ChoiceBuilder.
  *
- * This is analoguous to [ChoiceBuilder.build] except it returns a [Longest] instead
- * of a [Choice].
+ * This is analoguous to [choice] except it returns a [Longest] instead
+ * of a [Choice] (hence, it does *not* call [ChoiceBuilder.build] although it does provide
+ * the same guarantees).
  */
 inline fun longest (body: () -> ChoiceBuilder): Longest
 {

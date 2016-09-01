@@ -99,7 +99,7 @@ abstract class Grammar
     /**
      * `!parser` is a shorthand for [Rec]`(parser)`.
      */
-    operator fun Parser.not() = Rec(this)
+    operator fun ParserBuilder.not() = Rec(this.build())
 
     /**
      * +"str" is a shorthand for `Seq(Str("str"), whitespace)`.
@@ -107,15 +107,16 @@ abstract class Grammar
     operator fun String.unaryPlus() = Seq(Str(this), whitespace)
 
     /**
-     * Syntactic sugar for `Seq(Leaf(this, node), whitespace)` (see [Leaf]).
+     * Syntactic sugar for `Seq(Leaf(this, f), whitespace)` (see [Leaf]).
      */
-    fun Parser.atom(node: (String) -> Any): Parser = Seq(Leaf(this, node), whitespace)
+    inline fun ParserBuilder.atom (crossinline node: (String) -> Any): Parser
+        = Seq(Build(this.build()) { node(str) }, whitespace)
 
     /**
      * Syntactic sugar for `Seq(this, whitespace)`.
      */
-    val Parser.wp: Parser
-        get() = Seq(this, whitespace)
+    val ParserBuilder.wp: Parser
+        get() = Seq(this.build(), whitespace)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 }

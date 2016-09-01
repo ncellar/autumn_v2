@@ -1,6 +1,7 @@
 package norswap.autumn.extensions.tokens
 import norswap.autumn.Grammar
 import norswap.autumn.Parser
+import norswap.autumn.ParserBuilder
 import norswap.autumn.parsers.Choice
 import norswap.autumn.parsers.Longest
 import norswap.autumn.parsers.OrFail
@@ -72,10 +73,11 @@ abstract class TokenGrammar: Grammar()
      *
      * !! Excepted for the position, no state manipulation is allowed inside a token parser.
      */
-    fun <T: Any> Parser.token(info: Boolean = false, value: (String) -> T?): Parser
+    fun <T: Any> ParserBuilder.token(info: Boolean = false, value: (String) -> T?): Parser
     {
+        val parser = build()
         val type = nextTokenType ++
-        val typeParser = TokenTypeParser(type, this, value, this@TokenGrammar)
+        val typeParser = TokenTypeParser(type, parser, value, this@TokenGrammar)
         val checkParser = TokenCheckParser(type, info, this@TokenGrammar)
         typeParsers.add(typeParser)
         checkParsers.add(checkParser)
@@ -87,7 +89,7 @@ abstract class TokenGrammar: Grammar()
     /**
      * Sugar for `this.token { it }`.
      */
-    val Parser.token: Parser
+    val ParserBuilder.token: Parser
         get() = token { it }
 
     /**

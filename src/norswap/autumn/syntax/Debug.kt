@@ -1,6 +1,7 @@
 package norswap.autumn.syntax
 import norswap.autumn.Context
 import norswap.autumn.Parser
+import norswap.autumn.ParserBuilder
 import norswap.autumn.parsers.*
 
 // -------------------------------------------------------------------------------------------------
@@ -8,63 +9,63 @@ import norswap.autumn.parsers.*
 /**
  * See [AfterPrintingState].
  */
-val Parser.afterPrintingState: Parser
-    get() = AfterPrintingState(this)
+val ParserBuilder.afterPrintingState: Parser
+    get() = AfterPrintingState(this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [BeforePrintingState].
  */
-val Parser.beforePrintingState: Parser
-    get() = BeforePrintingState(this)
+val ParserBuilder.beforePrintingState: Parser
+    get() = BeforePrintingState(this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * Sugar for `BeforePrintingState(AfterPrintingState(this))`.
  */
-val Parser.printStateAround: Parser
-    get() = BeforePrintingState(AfterPrintingState(this))
+val ParserBuilder.printStateAround: Parser
+    get() = BeforePrintingState(AfterPrintingState(this.build()))
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [AfterPrintingTrace].
  */
-val Parser.afterPrintingTrace: Parser
-    get() = AfterPrintingTrace(this)
+val ParserBuilder.afterPrintingTrace: Parser
+    get() = AfterPrintingTrace(this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [BeforePrintingTrace].
  */
-val Parser.beforePrintingTrace: Parser
-    get() = BeforePrintingTrace(this)
+val ParserBuilder.beforePrintingTrace: Parser
+    get() = BeforePrintingTrace(this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [ThenPrintResult].
  */
-val Parser.thenPrintResult: Parser
-    get() = ThenPrintResult(this)
+val ParserBuilder.thenPrintResult: Parser
+    get() = ThenPrintResult(this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [After].
  */
-fun Parser.after(f: Parser.(Context) -> Unit)
-    = After(this, f)
+fun ParserBuilder.after(f: Parser.(Context) -> Unit)
+    = After(this.build(), f)
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * See [Before].
  */
-fun Parser.then(f: Parser.(Context) -> Unit)
-    = Before(this, f)
+fun ParserBuilder.then(f: Parser.(Context) -> Unit)
+    = Before(this.build(), f)
 
 // -------------------------------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 package norswap.autumn.syntax
 import norswap.autumn.Parser
+import norswap.autumn.ParserBuilder
 import norswap.autumn.parsers.*
 
 // -------------------------------------------------------------------------------------------------
@@ -7,47 +8,47 @@ import norswap.autumn.parsers.*
 /**
  * [Opt]`(this)`
  */
-val Parser.opt: Parser
-    get() = Opt(this)
+val ParserBuilder.opt: Parser
+    get() = Opt(this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * [ZeroMore]`(this)`
  */
-val Parser.repeat: Parser
-    get() = ZeroMore(this)
+val ParserBuilder.repeat: Parser
+    get() = ZeroMore(this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * [OneMore]`(this)`
  */
-val Parser.repeat1: Parser
-    get() = OneMore(this)
+val ParserBuilder.repeat1: Parser
+    get() = OneMore(this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * [Repeat]`(n, this)`
  */
-fun Parser.repeat (n: Int)
-    = Repeat(n, this)
+fun ParserBuilder.repeat (n: Int)
+    = Repeat(n, this.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * [Around]`(this, inside)`
  */
-infix fun Parser.around (inside: Parser)
-    = Around(this, inside)
+infix fun ParserBuilder.around (inside: ParserBuilder)
+    = Around(this.build(), inside.build())
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * [Around1]`(this, inside)`
  */
-infix fun Parser.around1 (inside: Parser)
-    = Around1(this, inside)
+infix fun ParserBuilder.around1 (inside: ParserBuilder)
+    = Around1(this.build(), inside.build())
 
 // -------------------------------------------------------------------------------------------------

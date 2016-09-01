@@ -1,6 +1,7 @@
 package norswap.autumn.syntax
 import norswap.autumn.Parser
 import norswap.autumn.ParserBuilder
+import norswap.autumn.parsers.Choice
 import norswap.autumn.parsers.Seq
 
 // =================================================================================================
@@ -17,7 +18,7 @@ data class SeqBuilder (val list: MutableList<Parser>): ParserBuilder
 
     // ---------------------------------------------------------------------------------------------
 
-    override fun build (): Parser
+    override fun build (): Seq
     {
         if (commited)
             throw Exception("Trying to build a seq builder more than once.")
@@ -29,21 +30,24 @@ data class SeqBuilder (val list: MutableList<Parser>): ParserBuilder
     // ---------------------------------------------------------------------------------------------
 
     // TOOD
-    operator fun rangeTo (right: Parser): SeqBuilder
+    operator fun rangeTo (right: ParserBuilder): SeqBuilder
     {
         if (commited)
             throw Exception("Trying to mutate a seq builder after it has been built.")
 
-        list.add(right)
+        list.add(right.build())
         return this
     }
-
-    // ---------------------------------------------------------------------------------------------
-
-    // TODO kill
-    val seq: Parser
-        get() = build()
 }
+
+// =================================================================================================
+
+/**
+ * Builds a [Seq] out of the supplied ChoiceBuilder.
+ * This is just an alias for [rule] applying only to choices.
+ */
+inline fun seq (body: () -> SeqBuilder): Seq
+    = body().build()
 
 // =================================================================================================
 
@@ -51,7 +55,7 @@ data class SeqBuilder (val list: MutableList<Parser>): ParserBuilder
  * Constructs a new [SeqBuilder] initially containing
  * a parser built from the received and [right].
  */
-operator fun Parser.rangeTo (right: Parser)
-    = SeqBuilder(mutableListOf(this.build(), right))
+operator fun ParserBuilder.rangeTo (right: ParserBuilder)
+    = SeqBuilder(mutableListOf(this.build(), right.build()))
 
 // =================================================================================================
