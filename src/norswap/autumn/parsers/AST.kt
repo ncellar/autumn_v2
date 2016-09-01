@@ -6,11 +6,11 @@ import norswap.autumn.result.*
 import norswap.autumn.syntax.build
 import norswap.autumn.withStack
 import norswap.violin.Maybe
+import norswap.violin.None
 import norswap.violin.stream.*
 import norswap.violin.utils.after
 
 // Parsers used to build AST nodes.
-// TODO dowithStack funciton
 
 // -------------------------------------------------------------------------------------------------
 
@@ -21,30 +21,16 @@ import norswap.violin.utils.after
  */
 class WithStack (
     val child: Parser,
+    val backargs: Int = 0,
     val pop: Boolean = true,
     val f: StackAccess.() -> Result)
 : Parser(child)
 {
     override fun _parse_(ctx: Context): Result
     {
-        val stack = StackAccess(ctx, this, pop)
+        val stack = StackAccess(ctx, this, backargs, pop)
         return child.parse(ctx) and { stack.prepareAccess() ; stack.f() }
     }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/**
- * Like [WithStack], except [f] always succeeds.
- */
-class DoWithStack (
-    val child: Parser,
-    val pop: Boolean = true,
-    val f: StackAccess.() -> Unit)
-: Parser(child)
-{
-    override fun _parse_(ctx: Context): Result
-        = withStack(ctx, this, child, pop, f)
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -57,46 +43,36 @@ class DoWithStack (
 
 class Build (
     val child: Parser,
+    val backargs: Int = 0,
     val node: StackAccess.() -> Any)
 : Parser(child)
 {
     override fun _parse_(ctx: Context): Result
-        = withStack(ctx, this, child) { push(node()) }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/**
- * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with
- * the matched text as parameter, then push the returned object onto [Context.stack].
- *
- * Also see [Grammar.atom].
- */
-class Leaf (
-    val child: Parser,
-    val node: (String) -> Any)
-: Parser(child)
-{
-    override fun _parse_(ctx: Context): Result
-    {
-        val start = ctx.pos
-        return child.parse(ctx) andDo {
-            val match = ctx.textFrom(start)
-            ctx.stack.push(node(match))
-        }
-    }
+        = withStack(ctx, this, child, backargs) { push(node()) }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * Returns a parser wrapping this parser. If the wrapped parser succeeds, tries to pop an item
- * from [Context.stack], then push an instance of [Maybe] corresponding to the result.
+ * from [Context.stack], then pushes [Some] or [None] depending on whether the pop suceeded.
+ * If it fails, pushes [None].
  */
 class BuildMaybe (val child: Parser): Parser(child)
 {
     override fun _parse_(ctx: Context): Result
-        = withStack(ctx, this, child) { push(Maybe(items.getOrNull(0))) }
+    {
+        val stack = StackAccess(ctx, this, 0, pop = true)
+        val result = child.parse(ctx)
+        if (result is Success) {
+            stack.prepareAccess()
+            stack.push(Maybe(stack.items.getOrNull(0)))
+        }
+        else {
+            stack.push(None)
+        }
+        return Success
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -109,9 +85,8 @@ class AsBool (val child: Parser): Parser(child)
 {
     override fun _parse_(ctx: Context): Result
     {
-        // StackAccess is used only to pop items pushed by child in case of success.
-        val stack = StackAccess(ctx, this, pop = true)
-        val res = child.parse(ctx) andDo { stack.prepareAccess() }
+        val size0 = ctx.stack.size
+        val res = child.parse(ctx) andDo { ctx.stack.truncate(size0) }
         return res after { ctx.stack.push(it == Success) } or { Success }
     }
 }
@@ -119,20 +94,25 @@ class AsBool (val child: Parser): Parser(child)
 // -------------------------------------------------------------------------------------------------
 
 /**
- * Syntactic sugar for `Build(child) { rest<T>() }`.
+ * Collects all items pushed on the stack by [child] (assumed to be of type [T]) into a list,
+ * which is itself pushed on the stack.
  */
-class Collect <T: Any> (val child: Parser): Parser(child)
+class Collect <T: Any> (val child: Parser, val backargs: Int = 0): Parser(child)
 {
     override fun _parse_(ctx: Context): Result
-        = withStack(ctx, this, child) { push(rest<T>()) }
+        = withStack(ctx, this, child, backargs) { push(rest<T>()) }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-class BuildPair (val child: Parser): Parser(child)
+/**
+ * Pops two items from the stack, creates a [Pair] out of them (left = first pushed) and pushes
+ * it on the stack. Any other items pushed on the stack by [child] are discarded.
+ */
+class BuildPair (val child: Parser, val backargs: Int = 0): Parser(child)
 {
     override fun _parse_(ctx: Context): Result
-        = withStack(ctx, this, child) { push(Pair<Any, Any>(get(), get())) }
+        = withStack(ctx, this, child, backargs) { push(Pair<Any, Any>(get(), get())) }
 }
 
 // -------------------------------------------------------------------------------------------------

@@ -29,6 +29,7 @@ import norswap.violin.stream.*
 class StackAccess(
     val ctx: Context,
     val parser: Parser,
+    val backargs: Int,
     val pop: Boolean,
     val stack: Stack<Any> = ctx.stack)
 {
@@ -49,9 +50,16 @@ class StackAccess(
     /**
      * Called before the StackAccess is passed to the user.
      */
-    fun prepareAccess() {
+    fun prepareAccess()
+    {
+        if (stack.size < size0)
+            throw Exception("Stack shrunk beyond initial size")
+
+        if (size0 < backargs)
+            throw Exception("Requiring more back args than present on the stack")
+
         items = stack.stream()
-            .limit(stack.size - size0)
+            .limit(stack.size - size0 + backargs)
             .after { if (pop) stack.pop() }
             .list()
             .asReversed()
@@ -132,11 +140,12 @@ inline fun withStack (
     ctx: Context,
     parser: Parser,
     child: Parser,
+    backargs: Int = 0,
     pop: Boolean = true,
     f: StackAccess.() -> Unit)
 : Result
 {
-    val stack = StackAccess(ctx, parser, pop)
+    val stack = StackAccess(ctx, parser, backargs, pop)
     val result = child.parse(ctx)
     if (result is Success) {
         stack.prepareAccess()
