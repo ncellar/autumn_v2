@@ -124,3 +124,16 @@ fun Throwable.stackTraceString(): String {
 }
 
 // -------------------------------------------------------------------------------------------------
+
+/**
+ * Casts [list] to mutable if it can be, otherwise make a copy.
+ */
+fun <T> mutable (list: List<T>): MutableList<T>
+{
+    return if (list is MutableList)
+        list
+    else
+        list.toMutableList()
+}
+
+// -------------------------------------------------------------------------------------------------

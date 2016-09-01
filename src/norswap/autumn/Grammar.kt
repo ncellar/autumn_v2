@@ -55,7 +55,7 @@ abstract class Grammar
             .filter {
                 !it.returnType.isMarkedNullable
                     && it.returnType.javaType is Class<*>
-                    && Parser::class.java.isAssignableFrom(it.returnType.javaType as Class<*>)
+                    && ParserBuilder::class.java.isAssignableFrom(it.returnType.javaType as Class<*>)
                     && it.name != "tokenParser"
             }
 
@@ -70,7 +70,7 @@ abstract class Grammar
     open fun initialize() {
         if (initialized) return
         parsers().each {
-            val parser = it.call(this) as Parser
+            val parser = (it.call(this) as ParserBuilder).build()
             if (parser.name != null) {
                 val warning
                     = "Warning: trying to assign a new name (${it.name}) to an already " +

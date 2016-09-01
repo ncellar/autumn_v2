@@ -1,8 +1,8 @@
 package norswap.autumn.syntax
 import norswap.autumn.Parser
 import norswap.autumn.ParserBuilder
-import norswap.autumn.parsers.Choice
 import norswap.autumn.parsers.Seq
+import norswap.autumn.utils.mutable
 
 // =================================================================================================
 
@@ -15,39 +15,31 @@ data class SeqBuilder (val list: MutableList<Parser>): ParserBuilder
     // ---------------------------------------------------------------------------------------------
 
     var commited = false
+    lateinit var built: Seq
 
     // ---------------------------------------------------------------------------------------------
 
     override fun build (): Seq
     {
-        if (commited)
-            throw Exception("Trying to build a seq builder more than once.")
-
-        commited = true
-        return Seq(*list.toTypedArray())
+        if (!commited) {
+            commited = true
+            built = Seq(*list.toTypedArray())
+        }
+        return built
     }
 
     // ---------------------------------------------------------------------------------------------
 
-    // TOOD
+    // TODO
     operator fun rangeTo (right: ParserBuilder): SeqBuilder
     {
         if (commited)
-            throw Exception("Trying to mutate a seq builder after it has been built.")
+            return SeqBuilder(mutable(list + right.build()))
 
         list.add(right.build())
         return this
     }
 }
-
-// =================================================================================================
-
-/**
- * Builds a [Seq] out of the supplied ChoiceBuilder.
- * This is just an alias for [rule] applying only to choices.
- */
-inline fun seq (body: () -> SeqBuilder): Seq
-    = body().build()
 
 // =================================================================================================
 

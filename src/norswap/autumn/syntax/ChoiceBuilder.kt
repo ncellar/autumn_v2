@@ -3,6 +3,7 @@ import norswap.autumn.Parser
 import norswap.autumn.ParserBuilder
 import norswap.autumn.parsers.Choice
 import norswap.autumn.parsers.Longest
+import norswap.autumn.utils.mutable
 
 // =================================================================================================
 
@@ -16,16 +17,17 @@ data class ChoiceBuilder (val list: MutableList<Parser>): ParserBuilder
 
     /** @suppress */
     var commited = false
+    lateinit var built: Choice
 
     // ---------------------------------------------------------------------------------------------
 
     override fun build (): Choice
     {
-        if (commited)
-            throw Exception("Trying to build a choice builder more than once.")
-
-        commited = true
-        return Choice(*list.toTypedArray())
+        if (!commited) {
+            commited = true
+            built = Choice(*list.toTypedArray())
+        }
+        return built
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -34,7 +36,7 @@ data class ChoiceBuilder (val list: MutableList<Parser>): ParserBuilder
     operator fun div (right: ParserBuilder): ChoiceBuilder
     {
         if (commited)
-            throw Exception("Trying to mutate a choice builder after it has been built.")
+            return ChoiceBuilder(mutable(list + right.build()))
 
         list.add(right.build())
         return this
