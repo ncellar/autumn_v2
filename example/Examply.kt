@@ -137,13 +137,13 @@ object Examply : Grammar()
 
     val type = !Choice(simpleType, funType)
 
-    val typedIden = Seq(iden, Seq(+":", type).opt.maybe)
+    val typedIden = Seq(iden, Seq(+":", type).maybe)
         .build { TypedIdentifier(get(), maybe()) }
 
     val paramDecls = (typedIden around +",")
         .collect<TypedIdentifier>()
 
-    val paramArrow = Seq(paramDecls, +"->").opt.maybe
+    val paramArrow = Seq(paramDecls, +"->").maybe
         .build { maybe() ?: emptyList<TypedIdentifier>() }
 
     /// --- Expressions
@@ -207,7 +207,7 @@ object Examply : Grammar()
 
     val assignSuffix
         = Seq(+"=", !"assign")
-        .build { Assign(stack.pop() as Expr, get()) }
+        .build(1) { Assign(get(), get()) }
 
     val assign
         = Seq(additive, assignSuffix.opt)
@@ -231,7 +231,7 @@ object Examply : Grammar()
     val `while`= Seq(+"while", expr, statements)
         .build { While(get(), get()) }
 
-    val `return` = Seq(+"return", expr.opt.maybe, newline)
+    val `return` = Seq(+"return", expr.maybe, newline)
         .build { Return(maybe()) }
 
     val `break` = Seq(+"break", newline)
@@ -251,8 +251,7 @@ object Examply : Grammar()
             call.copy(params = call.params + Lambda(get(), get()))
         }
 
-    val aMethodCall = postfix.withStack(false) {
-        parser.succeed(ctx) { get<Any>() is MethodCall } }
+    val aMethodCall = Predicate { ctx -> ctx.stack.peek() is MethodCall }
 
     val blockMethodCall = Seq(aMethodCall, blockCallSuffix)
         .build {
@@ -267,7 +266,7 @@ object Examply : Grammar()
 
     val blockCall = Choice(blockCtor, blockMethodCall, blockFunCall)
 
-    val varRight = Seq(+"=", Choice(blockCall, expr)).opt.maybe
+    val varRight = Seq(+"=", Choice(blockCall, expr)).maybe
 
     val `val` = Seq(+"val", typedIden, varRight, newline)
         .build { Val(get(), maybe()) }
@@ -277,10 +276,10 @@ object Examply : Grammar()
 
     // --- Classes
 
-    val classBody = ClassDef(decls.opt.maybe)
+    val classBody = ClassDef(decls.maybe)
         .build { maybe() ?: emptyList<Decl>() }
 
-    val `class` = Seq(+"class", NewType(iden), Seq(+":", simpleType).opt.maybe, classBody)
+    val `class` = Seq(+"class", NewType(iden), Seq(+":", simpleType).maybe, classBody)
         .build { Class(get(), maybe(), get()) }
 
     val alias = Seq(+"alias", NewType(iden, alias = true), +"=", type)
@@ -288,7 +287,7 @@ object Examply : Grammar()
 
     val parenParamDecls = Seq(+"(", paramDecls, +")")
 
-    val returnType = Seq(+":", type).opt.maybe
+    val returnType = Seq(+":", type).maybe
 
     val `fun` = Seq(+"fun", iden, parenParamDecls, returnType, statements)
         .build { Fun(get(), get(), maybe(), get()) }
