@@ -1,7 +1,7 @@
 package norswap.autumn.parsers
 import norswap.autumn.Context
 import norswap.autumn.Parser
-import norswap.autumn.StackAccess
+import norswap.autumn.BuildEnv
 import norswap.autumn.result.*
 import norswap.autumn.syntax.build
 import norswap.autumn.withStack
@@ -16,19 +16,19 @@ import norswap.violin.utils.after
 
 /**
  * Returns a parser that invokes [child] then, if successful, returns the result
- * of [f] with a [StackAccess] receiver. Nodes pushed by [child] will be popped from the stack
+ * of [f] with a [BuildEnv] receiver. Nodes pushed by [child] will be popped from the stack
  * if [pop] is true (default: true).
  */
 class WithStack (
     val child: Parser,
     val backargs: Int = 0,
     val pop: Boolean = true,
-    val f: StackAccess.() -> Result)
+    val f: BuildEnv.() -> Result)
 : Parser(child)
 {
     override fun _parse_(ctx: Context): Result
     {
-        val stack = StackAccess(ctx, this, backargs, pop)
+        val stack = BuildEnv(ctx, this, backargs, pop)
         return child.parse(ctx) and { stack.prepareAccess() ; stack.f() }
     }
 }
@@ -37,14 +37,14 @@ class WithStack (
 
 /**
  * Returns a parser that wraps this parser. If the wrapped parser succeeds, calls [node] with a
- * [StackAccess] and pushes the value it returns onto the stack. Nodes pushed by [child] will be
+ * [BuildEnv] and pushes the value it returns onto the stack. Nodes pushed by [child] will be
  * popped from the stack.
  */
 
 class Build (
     val child: Parser,
     val backargs: Int = 0,
-    val node: StackAccess.() -> Any)
+    val node: BuildEnv.() -> Any)
 : Parser(child)
 {
     override fun _parse_(ctx: Context): Result
@@ -62,7 +62,7 @@ class BuildMaybe (val child: Parser): Parser(child)
 {
     override fun _parse_(ctx: Context): Result
     {
-        val stack = StackAccess(ctx, this, 0, pop = true)
+        val stack = BuildEnv(ctx, this, 0, pop = true)
         val result = child.parse(ctx)
         if (result is Success) {
             stack.prepareAccess()

@@ -1,7 +1,7 @@
 package norswap.autumn.syntax
 import norswap.autumn.Parser
 import norswap.autumn.ParserBuilder
-import norswap.autumn.StackAccess
+import norswap.autumn.BuildEnv
 import norswap.autumn.parsers.*
 import norswap.autumn.result.Result
 import norswap.autumn.result.Success
@@ -11,7 +11,7 @@ import norswap.autumn.result.Success
 /**
  * See [WithStack].
  */
-fun ParserBuilder.withStack (backargs: Int = 0, pop: Boolean = true, node: StackAccess.() -> Result)
+fun ParserBuilder.withStack (backargs: Int = 0, pop: Boolean = true, node: BuildEnv.() -> Result)
     = WithStack(this.build(), backargs, pop, node)
 
 // -------------------------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ fun ParserBuilder.withStack (backargs: Int = 0, pop: Boolean = true, node: Stack
 /**
  * Like [withStack], except that it always succeeds if the receiver succeeds.
  */
-inline fun ParserBuilder.doWithStack (backargs: Int = 0, pop: Boolean = true, crossinline f: StackAccess.() -> Unit)
+inline fun ParserBuilder.doWithStack (backargs: Int = 0, pop: Boolean = true, crossinline f: BuildEnv.() -> Unit)
     = WithStack(this.build(), backargs, pop) { f() ; Success }
 
 // -------------------------------------------------------------------------------------------------
@@ -27,7 +27,7 @@ inline fun ParserBuilder.doWithStack (backargs: Int = 0, pop: Boolean = true, cr
 /**
  * See [Build].
  */
-fun ParserBuilder.build (backargs: Int = 0, node: StackAccess.() -> Any)
+fun ParserBuilder.build (backargs: Int = 0, node: BuildEnv.() -> Any)
     = Build(this.build(), backargs, node)
 
 // -------------------------------------------------------------------------------------------------
