@@ -1,3 +1,4 @@
+package examply
 import norswap.autumn.Context
 import norswap.autumn.DEBUG
 import norswap.autumn.diagnostic
