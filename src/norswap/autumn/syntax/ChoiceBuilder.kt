@@ -7,35 +7,44 @@ import norswap.autumn.utils.mutable
 
 // =================================================================================================
 
-// TODO change
 /**
- * Class enabling the `(x / y / z).choice` sugar for `Choice(x, y, z)`.
+ * Enables syntactic sugar to represent choices.
+ *
+ * e.g. you can write `(x / y / z).build()` for `Choice(x, y, z)`
+ *
+ * The `.build()` part is usually not necessary, as Autumn is setup to accept [ParserBuilder]
+ * in most places.
+ *
+ * This can also be used to build a [Longest], through [longest].
  */
 data class ChoiceBuilder (val list: MutableList<Parser>): ParserBuilder
 {
     // ---------------------------------------------------------------------------------------------
 
-    /** @suppress */
-    var commited = false
-    lateinit var built: Choice
+    var built: Choice? = null
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Convert this build into a [Choice].
+     */
     override fun build (): Choice
     {
-        if (!commited) {
-            commited = true
+        if (built == null) {
             built = Choice(*list.toTypedArray())
         }
-        return built
+        return built!!
     }
 
     // ---------------------------------------------------------------------------------------------
 
-    // TODO
+    /**
+     * Returns a builder that includes [right] in addition to the items in the current builder
+     * (may mutate the current builder and return that it [build] hasn't been called yet).
+     */
     operator fun div (right: ParserBuilder): ChoiceBuilder
     {
-        if (commited)
+        if (built != null)
             return ChoiceBuilder(mutable(list + right.build()))
 
         list.add(right.build())
@@ -54,41 +63,58 @@ operator fun ParserBuilder.div (right: ParserBuilder)
 
 // =================================================================================================
 
+/**
+ * Used in [choice] to enables syntactic sugar of the form:
+ *
+ *  ````
+ *  choice {
+ *      or { x }
+ *      or { y }
+ *  }
+ *  ````
+ */
 class ChoiceBuilderEnv
 {
-    val builder = ChoiceBuilder(mutableListOf())
+    var builder = ChoiceBuilder(mutableListOf())
 
-    inline fun or (clause: () -> ParserBuilder): ChoiceBuilder
-        = builder / clause()
+    inline fun or (clause: () -> ParserBuilder): Unit {
+        builder = builder / clause()
+    }
 }
 
 // =================================================================================================
 
 /**
- * Builds a [Choice] out of the supplied ChoiceBuilder.
- * This is just an alias for [rule] applying only to choices.
+ * Builds a [Choice] using [ChoiceBuilderEnv].
  */
-inline fun choice (body: ChoiceBuilderEnv.() -> ChoiceBuilder): Choice
-    = ChoiceBuilderEnv().body().build()
+inline fun choice (body: ChoiceBuilderEnv.() -> Unit): Parser
+{
+    val env = ChoiceBuilderEnv()
+    env.body()
+    return env.builder.build()
+}
 
 // =================================================================================================
 
 /**
- * Build a [Longest] parser out of the supplied ChoiceBuilder.
- *
- * This is analoguous to [choice] except it returns a [Longest] instead
- * of a [Choice] (hence, it does *not* call [ChoiceBuilder.build] although it does provide
- * the same guarantees).
+ * Builds a [Longest] using [ChoiceBuilderEnv].
+ */
+inline fun longest (body: ChoiceBuilderEnv.() -> Unit): Longest
+{
+    val env = ChoiceBuilderEnv()
+    env.body()
+    return Longest(*env.builder.list.toTypedArray())
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Builds a [Longest] from the supplied [ChoiceBuilder].
  */
 inline fun longest (body: () -> ChoiceBuilder): Longest
 {
-    val b = body()
-
-    if (b.commited)
-        throw Exception("Trying to build a choice builder more than once.")
-
-    b.commited = true
-    return Longest(*b.list.toTypedArray())
+    val builder = body()
+    return Longest(*builder.list.toTypedArray())
 }
 
 // =================================================================================================

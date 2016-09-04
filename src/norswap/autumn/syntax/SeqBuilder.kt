@@ -6,34 +6,42 @@ import norswap.autumn.utils.mutable
 
 // =================================================================================================
 
-// TODO change
 /**
- * Class enabling the `(x .. y .. z).seq` sugar for `Seq(x, y, z)`.
+ * Enables syntactic sugar to represent choices.
+ *
+ * e.g. you can write `(x .. y .. z).build()` for `Seq(x, y, z)`
+ *
+ * The `.build()` part is usually not necessary, as Autumn is setup to accept [ParserBuilder]
+ * in most places.
  */
 data class SeqBuilder (val list: MutableList<Parser>): ParserBuilder
 {
     // ---------------------------------------------------------------------------------------------
 
-    var commited = false
-    lateinit var built: Seq
+    var built: Seq? = null
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Convert this build into a [Seq].
+     */
     override fun build (): Seq
     {
-        if (!commited) {
-            commited = true
+        if (built == null) {
             built = Seq(*list.toTypedArray())
         }
-        return built
+        return built!!
     }
 
     // ---------------------------------------------------------------------------------------------
 
-    // TODO
+    /**
+     * Returns a builder that includes [right] in addition to the items in the current builder
+     * (may mutate the current builder and return that it [build] hasn't been called yet).
+     */
     operator fun rangeTo (right: ParserBuilder): SeqBuilder
     {
-        if (commited)
+        if (built != null)
             return SeqBuilder(mutable(list + right.build()))
 
         list.add(right.build())
