@@ -7,3 +7,7 @@
 /srclib/**/.idea
 /srclib/**/*.iml
 /local.mk
+/bench_deps
+
+# temporary
+/benchmark
