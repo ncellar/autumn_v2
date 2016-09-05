@@ -1,14 +1,12 @@
 .DS_Store
 /lib/
 /out/
-/src/Scratch.kt
+/pages/
+/kotlinc/
+/bench_deps/
 /.idea/workspace.xml
 /.idea/uiDesigner.xml
-/srclib/**/.idea
-/srclib/**/*.iml
 /local.mk
-/bench_deps
-/kotlinc
 
 # temporary
 /benchmark
