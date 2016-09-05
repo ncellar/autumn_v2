@@ -8,6 +8,7 @@
 /srclib/**/*.iml
 /local.mk
 /bench_deps
+/kotlinc
 
 # temporary
 /benchmark
