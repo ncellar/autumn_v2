@@ -26,7 +26,7 @@ else
 endif
 
 # defines BINTRAY_XXX and SONATYPE_XXX
-include local.mk
+-include local.mk
 
 space:=$(eval) $(eval)
 # java supports "lib/*", but not kotlin
@@ -64,7 +64,7 @@ kotlin:
 	unzip compiler.zip -d .
 	rm compiler.zip
 
-cleankotlin:
+clean-kotlin:
 	rm -rf kotlinc
 
 deps:
@@ -75,7 +75,7 @@ deps:
 	curl -L $(TESTNG)	  > lib/testng.jar
 	curl -L $(JCOMMA)     > lib/jcommander.jar
 
-cleandeps:
+clean-deps:
 # leave the jars added by IntelliJ
 	find lib ! -name 'kotlin-*.jar' -type f -exec rm -f {} +
 
@@ -138,14 +138,16 @@ trace:
 
 .PHONY: \
   build \
-  buildtests \
+  build-examples \
+  run-examply \
+  build-tests \
   test \
   rebuild \
   clean \
   kotlin \
-  cleankotlin \
+  clean-kotlin \
   deps \
-  cleandeps \
+  clean-deps \
   jar \
   publish \
   docs \
