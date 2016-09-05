@@ -83,6 +83,15 @@ jar:
 	find out -name .DS_Store -type f -delete
 	jar cf out/$(NAME)-$(VERSION).jar -C out/production .
 
+fatjar:
+	find out -name .DS_Store -type f -delete
+	mkdir -p out/fatjar_staging
+	unzip lib/violin.jar -d out/fatjar_staging
+	mv out/fatjar_staging/META-INF/main.kotlin_module out/fatjar_staging/META-INF/violin.kotlin_module
+	cp -R out/production/* out/fatjar_staging
+	jar cf out/$(NAME)-$(VERSION)-fat.jar -C out/fatjar_staging .
+	rm -rf out/fatjar_staging
+
 jars: jar
 	find src -name .DS_Store -type f -delete
 	jar cf out/$(NAME)-$(VERSION)-sources.jar -C src .
@@ -149,6 +158,7 @@ trace:
   deps \
   clean-deps \
   jar \
+  fatjar \
   publish \
   docs \
   pubdocs \

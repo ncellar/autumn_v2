@@ -1,4 +1,4 @@
-# The Autumn Parser Library
+# The Autumn Parsing Library
 
 Autumn is a parsing library written in the [Kotlin] programming language.
 
@@ -50,15 +50,16 @@ If you make any change, you can re-generate the KDoc documentation with `make do
 
 ## Download
 
-A pre-built JAR file is [availble for download][jar].
+A pre-built JAR file is [availble for download][jar], including all dependencies
+excepted the Kotlin runtime.
 
-[jar]: https://github.com/norswap/autumn/releases/download/0.1.0/autumn-0.1.0.jar
+[jar]: https://github.com/norswap/autumn/releases/download/0.1.0/autumn-0.1.0-fat.jar
 
 ## Building
 
 ### Command Line
 
-Building requires a traditional Unix toolchain: `bash`, `make`, `curl` and `unzip`.
+Building requires a traditional Unix toolchain: `bash`, `make`, `curl`, `find` and `unzip`.
 The build script also works fine on Windows with Cygwin/MSYS, provided you have installed the
 required packages for the above commands.
 
@@ -78,9 +79,11 @@ The local compiler will take precedence, if present.
 
 This only generates class files, usually you want to build a jar:
 
-    make jar
+    make fatjar
     
-(This must be run after `make build`)
+This must be run after `make build` and `make deps`.
+
+To build a jar that does not include the dependency on `violin.jar`, use `make jar` instead.
 
 All outputs are put in the `out` directory. `.class` files are in `out/production`, to be compatible
 with the IntelliJ IDEA default layout.
