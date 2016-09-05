@@ -40,7 +40,14 @@ build:
 	javac -cp $(cp) -d out/production src/norswap/autumn/utils/JUtils.java
 	$(KOTLINC) -cp $(cp) src -d out/production
 
-buildtests:
+build-examples:
+	mkdir -p out/examples
+	$(KOTLINC) -cp $(cp) example -d out/examples
+
+run-examply:
+	java -cp "$(basecp)$(SEP)out/examples" examply.MainKt
+
+build-tests:
 	mkdir -p out/test
 	$(KOTLINC) -cp $(testcp) test -d out/test
 
