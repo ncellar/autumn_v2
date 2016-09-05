@@ -42,9 +42,9 @@ The package [norswap.autumn.syntax](/src/norswap/autumn/syntax)
 contains the definition of syntactic sugars for the aforementionned parsers.
 The structure of this package mirrors that of `norswap.autumn.parsers`.
 
-All this documentation can be [consulted online as KDoc][kdoc] (Kotlin's Javadoc).
+**All this documentation can be [consulted online as KDoc][kdoc] (Kotlin's Javadoc).**
 
-[kdoc]: TODO
+[kdoc]: http://norswap.com/autumn/kotlin
 
 If you make any change, you can re-generate the KDoc documentation with `make docs`.
 
@@ -52,7 +52,7 @@ If you make any change, you can re-generate the KDoc documentation with `make do
 
 A pre-built JAR file is [availble for download][jar].
 
-[jar]: TODO
+[jar]: https://github.com/norswap/autumn/releases/download/0.1.0/autumn-0.1.0.jar
 
 ## Building
 
