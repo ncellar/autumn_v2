@@ -37,6 +37,7 @@ testcp:="$(basecp)$(SEP)out/test"
 
 build:
 	mkdir -p out/production
+	javac -cp $(cp) -d out/production src/norswap/autumn/utils/JUtils.java
 	$(KOTLINC) -cp $(cp) src -d out/production
 
 buildtests:
