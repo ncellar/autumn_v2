@@ -109,14 +109,12 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
 
     internal val dbg = Parser.LogState()
     internal val states: List<State<*,*>>
-    private val stateMap: MutableMap<Class<out State<*,*>>, State<*,*>>
-    private val position = Position(this)
-    private val furthestFailureState = FurthestFailure(this)
+    private  val stateMap: MutableMap<Class<out State<*,*>>, State<*,*>>
+    private  val position = Position(this)
 
     init {
         stateMap = mutableMapOf(
             position.javaClass to position,
-            furthestFailureState.javaClass to furthestFailureState,
             stack.javaClass to stack,
             seeds.javaClass to seeds)
         grammar.requiredStates().forEach { stateMap.put(it.javaClass, it) }
