@@ -1,16 +1,32 @@
-package norswap.javag
+package norswap.javag.test
 import norswap.autumn.Context
 import norswap.autumn.DEBUG
 import norswap.autumn.Grammar
 import norswap.autumn.diagnostic
 import norswap.autumn.syntax.alias
 import norswap.autumn.result.Failure
+import norswap.javag.Java
+import norswap.violin.utils.readFile
 
 var list = listOf("")
 var inspect = false
 
 fun main (args: Array<String>)
 {
+    fun parse (grammar: Grammar)
+    {
+        for (input in list) {
+            val ctx = Context(input, grammar)
+            val result = ctx.parse()
+            if (inspect || result is Failure) {
+                println(input)
+                println(diagnostic(ctx, result))
+                println("\n" + ctx.stack)
+                println("\n-------------\n")
+            }
+        }
+    }
+
     println("\n-------------\n")
     DEBUG = true
 
@@ -221,9 +237,7 @@ fun main (args: Array<String>)
         "(int x, int @Annot ... ys) -> lol"
     )
 
-    inspect = true
     parse(object: Java() { override val root = expr.alias })
-    inspect = false
 
     list = listOf(
         "@Marker",
@@ -326,18 +340,15 @@ fun main (args: Array<String>)
     )
 
     parse(object: Java() { override val root = typeDecl.alias })
-}
 
-fun parse (grammar: Grammar)
-{
-    for (input in list) {
-        val context = Context(input, grammar)
-        val result = context.parse()
-        if (inspect || result is Failure) {
-            println(input)
-            println(diagnostic(context, result))
-            println("\n" + context.stack)
-            println("\n-------------\n")
-        }
+    /////////////
+
+    val input = readFile("example/norswap/javag/test/Syntax.test")
+    val ctx = Context(input, Java())
+    val result = ctx.parse()
+    if (inspect || result is Failure) {
+        println("Syntax.test")
+        println(diagnostic(ctx, result))
+        println("\n" + ctx.stack)
     }
 }
