@@ -196,7 +196,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * Maps [State.snapshot] over all states.
      */
     fun snapshot(): Snapshot
-        = Snapshot(states.stream().map { state -> state.snapshot() }.list())
+        = Snapshot(states.map { it.snapshot() })
 
     /**
      * Maps [State.restore] over all states, using a return value of [snapshot].
@@ -208,7 +208,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * Maps [State.diff] over all states, using a return value of [snapshot].
      */
     fun diff(snap: Snapshot): Delta
-        = Delta(snap.elems.stream().indexed().map { states[it.index].diff(it.value) }.list())
+        = Delta(snap.elems.mapIndexed { i, d -> states[i].diff(d) })
 
     /**
      * Maps [State.merge] over all states, using a return value of [diff].
@@ -220,7 +220,10 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * Maps [State.equiv] over all states, using a return value of [snapshot].
      */
     fun equiv (pos: Int, snap: Snapshot): Boolean
-        = states.stream().zip(snap.elems.stream()).all { it.first.equiv(pos, it.second) }
+    {
+        var i = 0
+        return states.all { it.equiv(pos, snap.elems[i++]) }
+    }
 
     /// Diagnostic ---------------------------------------------------------------------------------
 
