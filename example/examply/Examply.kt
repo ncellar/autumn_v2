@@ -11,9 +11,11 @@ import norswap.violin.stream.*
 import norswap.violin.utils.*
 import java.util.HashMap
 
-object Examply : Grammar()
+class Examply: Grammar()
 {
-    override fun requiredStates() = listOf(IndentMap(), IndentStack(), TypeStack())
+    override fun requiredStates() = listOf<State<*, *>>(IndentStack(), TypeStack())
+
+    lateinit var indentMap: Map<Int, IndentEntry>
 
     /// "LEXICAL" //////////////////////////////////////////////////////////////////////////////////
 
@@ -38,19 +40,9 @@ object Examply : Grammar()
         val count: Int,
         val end: Int)
 
-    class IndentMap: InertState<IndentMap>
-    {
-        lateinit var map: Map<Int, IndentEntry>
-
-        fun get(ctx: Context): IndentEntry =
-            map[ctx.lineMap.lineFromOffset(ctx.pos)]!!
-
-        override fun toString() = map.toString()
-    }
-
     class IndentStack: StackState<Int>()
 
-    val Context.indent: IndentEntry /**/ get() = state(IndentMap::class).get(this)
+    val Context.indent: IndentEntry /**/ get() = indentMap[lineMap.lineFromOffset(pos)]!!
     val Context.istack: IndentStack /**/ get() = state(IndentStack::class)
 
     val buildIndentMap = Parser { ctx ->
@@ -62,7 +54,7 @@ object Examply : Grammar()
             map.put(i, IndentEntry(count, pos + wspace.length))
             pos += str.length + 1
         }
-        ctx.state(IndentMap::class).map = map
+        indentMap = map
         Success
     }
 
@@ -215,7 +207,7 @@ object Examply : Grammar()
         .build(1) { Assign(get(), get()) }
 
     val assign
-        = Seq(additive, assignSuffix.opt)
+        = !Seq(additive, assignSuffix.opt)
 
     // val assign = Seq(additive, ZeroMore(Seq(+"=", additive)).collect)
     //    .rightAssoc<Expr> { acc, item -> Assign(item, acc) }

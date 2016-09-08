@@ -7,7 +7,11 @@ import norswap.autumn.result.*
  * Attempts to match a token, succeeding if the matched token is of type [type]. If successful,
  * pushes the [Token] onto [Context.stack] if [info], else pushes only its value (if any).
  */
-class TokenCheckParser (val type: Int, val info: Boolean, val grammar: TokenGrammar): Parser()
+class TokenCheckParser (
+    val type: Int,
+    val info: Boolean,
+    val grammar: TokenGrammar)
+: Parser()
 {
     // ---------------------------------------------------------------------------------------------
 
@@ -39,10 +43,10 @@ class TokenCheckParser (val type: Int, val info: Boolean, val grammar: TokenGram
 
     // ---------------------------------------------------------------------------------------------
 
-    override fun _parse_(ctx: Context): Result
+    override fun _parse_ (ctx: Context): Result
     {
         val pos = ctx.pos
-        val cache: TokenCache? = ctx.state_()
+        val cache = grammar.cache
 
         // use cached result if possible
         cache?.get(pos)?.let {

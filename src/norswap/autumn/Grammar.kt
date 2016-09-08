@@ -67,7 +67,9 @@ abstract class Grammar
      *
      * You can override this if you extend [Grammar], but you must call the super-method.
      */
-    open fun initialize() {
+    open fun initialize()
+    {
+        reset()
         if (initialized) return
         parsers().each {
             val parser = (it.call(this) as ParserBuilder).build()
@@ -88,6 +90,12 @@ abstract class Grammar
         }
         initialized = true
     }
+
+    /**
+     * Reset the grammar, in case it needs to be reused.
+     * Called by [initialize], itself called by [Context.parse].
+     */
+    open fun reset() {}
 
     /// SYNTAX /////////////////////////////////////////////////////////////////////////////////////
 
@@ -117,6 +125,11 @@ abstract class Grammar
      */
     val ParserBuilder.wp: Parser
         get() = Seq(this.build(), whitespace)
+
+    /**
+     * Grammar-specific diagnostic information (used in [norswap.autumn.diagnostic]).
+     */
+    open fun diagnostic(ctx: Context): String = ""
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 }

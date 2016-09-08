@@ -10,24 +10,6 @@ import java.util.HashMap
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * For states that never change, whose changes do not impact parsing, or where backtracking
- * over state changes never has adverse consequences.
- *
- * !! Carefully check that you're within the above parameter before using this kind of state.
- */
-interface InertState<Self: InertState<Self>>: State<Self, InertState.SameState> {
-    object SameState
-    override fun snapshot() = this as Self
-    override fun restore(snap: Self) {}
-    override fun diff(snap: Self) = SameState
-    override fun merge(delta: SameState) {}
-    override fun equiv(pos: Int, snap: Self) = this === snap
-    override fun snapshotString(snap: Self, ctx: Context) = "$this"
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
  * The actual state is held in the container [C], which is copied wholesale when snapshot,
  * diffing, restoring and merging. This works well for states that just comprise a few fixed fields.
  *

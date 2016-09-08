@@ -114,6 +114,12 @@ fun diagnostic(ctx: Context, result: Result): String
     else
         b += "Success up to ${ctx.posStr} (EOF at ${ctx.posToString(ctx.text.length - 1)})"
 
+    val gdiag = ctx.grammar.diagnostic(ctx)
+    if (!gdiag.isEmpty()) {
+        b += "\n"
+        b += gdiag
+    }
+
     return b.toString()
 }
 
