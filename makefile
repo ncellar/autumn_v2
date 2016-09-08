@@ -31,14 +31,14 @@ endif
 space:=$(eval) $(eval)
 # java supports "lib/*", but not kotlin
 jars:=$(subst $(space),$(SEP),$(shell find lib -name "*.jar"))
-basecp:=out/production$(SEP)$(jars)
+basecp:=out/production/autumn$(SEP)$(jars)
 cp:="$(basecp)"
 testcp:="$(basecp)$(SEP)out/test"
 
 build:
-	mkdir -p out/production
-	javac -cp $(cp) -d out/production src/norswap/autumn/utils/JUtils.java
-	$(KOTLINC) -cp $(cp) src -d out/production
+	mkdir -p out/production/autumn
+	javac -cp $(cp) -d out/production/autumn src/norswap/autumn/utils/JUtils.java
+	$(KOTLINC) -cp $(cp) src -d out/production/autumn
 
 build-examples:
 	mkdir -p out/examples
@@ -81,14 +81,14 @@ clean-deps:
 
 jar:
 	find out -name .DS_Store -type f -delete
-	jar cf out/$(NAME)-$(VERSION).jar -C out/production .
+	jar cf out/$(NAME)-$(VERSION).jar -C out/production/autumn .
 
 fatjar:
 	find out -name .DS_Store -type f -delete
 	mkdir -p out/fatjar_staging
 	unzip lib/violin.jar -d out/fatjar_staging
 	mv out/fatjar_staging/META-INF/main.kotlin_module out/fatjar_staging/META-INF/violin.kotlin_module
-	cp -R out/production/* out/fatjar_staging
+	cp -R out/production/autumn/* out/fatjar_staging
 	jar cf out/$(NAME)-$(VERSION)-fat.jar -C out/fatjar_staging .
 	rm -rf out/fatjar_staging
 
@@ -142,8 +142,13 @@ pubdocs:
 	cp -R out/docs/kotlin pages/kotlin
 	cd pages ; git add -A . ; git commit -m "update" ; git push origin gh-pages
 
+target=benchmark.benchmark.AutumnBenchKt
+
 trace:
-	java -cp $(classpath) -agentlib:hprof=cpu=samples,interval=1 $(target)
+	java -cp $(cp) -agentlib:hprof=cpu=samples,interval=1 $(target)
+
+run:
+	java -cp $(cp) $(target)
 
 .PHONY: \
   build \

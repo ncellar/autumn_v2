@@ -85,8 +85,8 @@ This must be run after `make build` and `make deps`.
 
 To build a jar that does not include the dependency on `violin.jar`, use `make jar` instead.
 
-All outputs are put in the `out` directory. `.class` files are in `out/production`, to be compatible
-with the IntelliJ IDEA default layout.
+All outputs are put in the `out` directory. `.class` files are in `out/production/autumn`, to be
+compatible with the IntelliJ IDEA default layout.
 
 ### With IntellIJ IDEA
 
