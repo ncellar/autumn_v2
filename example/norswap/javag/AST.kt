@@ -304,9 +304,6 @@ data class EnumConstant (
     val params: List<Expr>?,
     val body: List<Decl>?)
 
-// NOTE: should these really be nullable?
-// TODO replace FormalParameters with List<FormalParameter>
-
 enum class TypeDeclKind { ANNOTATION, CLASS, ENUM, INTERFACE }
 
 data class TypeDecl (

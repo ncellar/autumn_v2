@@ -43,10 +43,10 @@ open class Java: TokenGrammar()
         = CharPred(Char::isWhitespace)
 
     val lineComment
-        =  "//".lit..(any until "\n".lit)
+        =  "//".lit .. (any until "\n".lit)
 
     val multiComment
-        =  "/*".lit..(any until "*/".lit)
+        =  "/*".lit .. (any until "*/".lit)
 
     override val whitespaceParser
         = (wspaceChar / lineComment / multiComment).repeat
@@ -1176,7 +1176,6 @@ open class Java: TokenGrammar()
     /// CONFIG =====================================================================================
 
     override val tokenDisambiguation = TokenDisambiguation.LONGEST_MATCH
-    override fun requiredStates() = listOf(TokenCache())
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
