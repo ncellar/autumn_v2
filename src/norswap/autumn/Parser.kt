@@ -141,6 +141,15 @@ abstract class Parser (vararg val children: Parser): ParserBuilder
         return r
     }
 
+    /**
+     * Syntactic sugar for [parse].
+     */
+    @Suppress("NOTHING_TO_INLINE")
+    inline operator fun invoke (ctx: Context): Result
+    {
+        return parse(ctx)
+    }
+
     /// Strings ------------------------------------------------------------------------------------
 
     /**
