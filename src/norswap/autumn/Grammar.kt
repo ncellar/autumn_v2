@@ -70,9 +70,12 @@ abstract class Grammar
     open fun initialize()
     {
         reset()
+
         if (initialized) return
+
         parsers().each {
             val parser = (it.call(this) as ParserBuilder).build()
+
             if (parser.name != null) {
                 val warning
                     = "Warning: trying to assign a new name (${it.name}) to an already " +
@@ -80,14 +83,24 @@ abstract class Grammar
                     "Use `Alias` to make an alias."
                 System.err.println(warning)
             }
-            parser.name = parser.name ?: it.name
+
+            if (parser.name == null) {
+                if (parser is Rec)
+                    parser.name = "!" + it.name
+                else
+                    parser.name = it.name
+            }
+
             // Still register the new name! It just won't be displayed when printing the parser.
-            if (parser is Rec) recs.put(it.name, parser)
+            if (parser is Rec)
+                recs.put(it.name, parser)
         }
+
         recs.values.forEach {
             if (it.child.name == null)
-                it.child.name = it.name + " (rec target)"
+                it.child.name = it.name
         }
+
         initialized = true
     }
 
