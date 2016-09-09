@@ -196,7 +196,8 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     fun restore (snap: Snapshot)
     {
         pos = snap.pos
-        stack = snap.stack.clone()
+        if (stack != snap.stack)
+            stack = snap.stack.clone()
 
         snap.elems.forEachIndexed { i, s -> states[i].restore(s) }
     }
