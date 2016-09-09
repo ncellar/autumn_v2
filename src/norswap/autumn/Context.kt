@@ -1,12 +1,9 @@
 @file:Suppress("CanBePrimaryConstructorProperty")
 package norswap.autumn
 import norswap.autumn.result.*
-import norswap.autumn.state.FurthestFailure
-import norswap.autumn.state.Position
 import norswap.autumn.utils.dontRecordFailures
 import norswap.autumn.utils.expandTabsAndNullTerminate
 import norswap.violin.link.LinkList
-import norswap.violin.stream.*
 import java.io.PrintStream
 import kotlin.reflect.KClass
 
@@ -110,11 +107,9 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     internal val dbg = Parser.LogState()
     internal val states: List<State<*,*>>
     private  val stateMap: MutableMap<Class<out State<*,*>>, State<*,*>>
-    private  val position = Position(this)
 
     init {
         stateMap = mutableMapOf(
-            position.javaClass to position,
             stack.javaClass to stack,
             seeds.javaClass to seeds)
         grammar.requiredStates().forEach { stateMap.put(it.javaClass, it) }
@@ -193,26 +188,30 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     /**
      * Maps [State.snapshot] over all states.
      */
-    fun snapshot(): Snapshot
-        = Snapshot(states.map { it.snapshot() })
+    fun snapshot (): Snapshot
+        = Snapshot(pos, states.map { it.snapshot() })
 
     /**
      * Maps [State.restore] over all states, using a return value of [snapshot].
      */
-    fun restore(snap: Snapshot)
-        = snap.elems.forEachIndexed { i, s -> states[i].restore(s) }
+    fun restore (snap: Snapshot) {
+        pos = snap.pos
+        snap.elems.forEachIndexed { i, s -> states[i].restore(s) }
+    }
 
     /**
      * Maps [State.diff] over all states, using a return value of [snapshot].
      */
-    fun diff(snap: Snapshot): Delta
-        = Delta(snap.elems.mapIndexed { i, d -> states[i].diff(d) })
+    fun diff (snap: Snapshot): Delta
+        = Delta(pos, snap.elems.mapIndexed { i, d -> states[i].diff(d) })
 
     /**
      * Maps [State.merge] over all states, using a return value of [diff].
      */
-    fun merge(delta: Delta)
-         = delta.elems.forEachIndexed { i, d -> states[i].merge(d) }
+    fun merge (delta: Delta) {
+        pos = delta.pos
+        delta.elems.forEachIndexed { i, d -> states[i].merge(d) }
+    }
 
     /**
      * Maps [State.equiv] over all states, using a return value of [snapshot].
@@ -220,7 +219,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     fun equiv (pos: Int, snap: Snapshot): Boolean
     {
         var i = 0
-        return states.all { it.equiv(pos, snap.elems[i++]) }
+        return this.pos == pos && states.all { it.equiv(pos, snap.elems[i++]) }
     }
 
     /// Diagnostic ---------------------------------------------------------------------------------

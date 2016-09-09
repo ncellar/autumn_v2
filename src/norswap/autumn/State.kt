@@ -142,7 +142,7 @@ fun <Snapshot: Any> State<Snapshot, *>.snapshotString(snap: Any, ctx: Context) =
  *
  * This global snapshot is the aggregation of snapshot for each [State].
  */
-class Snapshot (val elems: List<Any>)
+class Snapshot (val pos: Int, val elems: List<Any>)
 {
     fun toString(ctx: Context): String
     {
@@ -171,7 +171,7 @@ class Snapshot (val elems: List<Any>)
  *
  * This global delta is the aggregation of the deltas for each [State].
  */
-class Delta (val elems: List<Any>)
+class Delta (val pos: Int, val elems: List<Any>)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
