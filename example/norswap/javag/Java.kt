@@ -489,24 +489,26 @@ open class Java: TokenGrammar()
         .build { VarDeclarator(get(), maybe()) }
 
     val varDeclNoSemi
-        = (modifiers .. type .. (varDeclarator around1 `,`))
-        .build { VarDecl(get(), get(), rest()) }
+        = (type .. (varDeclarator around1 `,`))
+        .build(1) { VarDecl(get(), get(), rest()) }
+
+    val varDeclSuffix
+        = varDeclNoSemi .. semi
 
     val varDecl
-        =  varDeclNoSemi .. semi
+        =  modifiers .. varDeclSuffix
 
     val throwsClause
         = (throws .. (type around `,`)).opt
         .collect<Type>()
 
-    val methodDecl
-        = (modifiers .. typeParams .. type .. iden .. formalParams .. dims
-        .. throwsClause .. (!"block" / semi).maybe)
-        .build { MethodDecl(get(), get(), get(), get(), get(), get(), get(), maybe()) }
+    val methodDeclSuffix
+        = (typeParams .. type .. iden .. formalParams .. dims .. throwsClause .. (!"block" / semi).maybe)
+        .build(1) { MethodDecl(get(), get(), get(), get(), get(), get(), get(), maybe()) }
 
-    val constructorDecl
-        = (modifiers .. typeParams .. iden .. formalParams .. throwsClause .. !"block")
-        .build { ConstructorDecl(get(), get(), get(), get(), get(), get()) }
+    val constructorDeclSuffix
+        = (typeParams .. iden .. formalParams .. throwsClause .. !"block")
+        .build(1) { ConstructorDecl(get(), get(), get(), get(), get(), get()) }
 
     val initBlock
         = (`static`.asBool .. !"block")
@@ -527,12 +529,12 @@ open class Java: TokenGrammar()
     val typeSig
         =  iden .. typeParams .. extendsClause .. implementsClause
 
+    val classModifiedDecl
+        = modifiers .. (varDeclSuffix / methodDeclSuffix / constructorDeclSuffix / !"typeDeclSuffix")
+
     val classBodyDecl = choice {
-        or { varDecl }
-        or { methodDecl }
-        or { !"typeDecl" }
+        or { classModifiedDecl }
         or { initBlock }
-        or { constructorDecl }
         or { semi }
     }
 
@@ -602,7 +604,7 @@ open class Java: TokenGrammar()
             TypeDecl(INTERFACE, get(), get(), get(), get(), get(), get())
         }
 
-    val typeDeclSuffix = choice {
+    val typeDeclSuffix = !choice {
         or { classDecl }
         or { interfaceDeclaration }
         or { enumDecl }
@@ -1016,7 +1018,7 @@ open class Java: TokenGrammar()
         .collect<Stmt>()
 
     val forInit
-        = varDeclNoSemi.collect<Stmt>() / exprStmtList
+        = (modifiers .. varDeclNoSemi).collect<Stmt>() / exprStmtList
 
     val basicForStmt
         = ( `for` .. `(`
