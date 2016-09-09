@@ -190,6 +190,8 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     fun snapshot (): Snapshot
         = Snapshot(pos, stack.clone(), states.map { it.snapshot() })
 
+    // ---------------------------------------------------------------------------------------------
+
     /**
      * Maps [State.restore] over all states, using a return value of [snapshot].
      */
@@ -201,6 +203,8 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
 
         snap.elems.forEachIndexed { i, s -> states[i].restore(s) }
     }
+
+    // ---------------------------------------------------------------------------------------------
 
     /**
      * Maps [State.diff] over all states, using a return value of [snapshot].
@@ -224,6 +228,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
         return Delta(pos, stackDiff, snap.elems.mapIndexed { i, d -> states[i].diff(d) })
     }
 
+    // ---------------------------------------------------------------------------------------------
 
     /**
      * Maps [State.merge] over all states, using a return value of [diff].
@@ -235,13 +240,15 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
         delta.elems.forEachIndexed { i, d -> states[i].merge(d) }
     }
 
+    // ---------------------------------------------------------------------------------------------
+
     /**
      * Maps [State.equiv] over all states, using a return value of [snapshot].
      */
-    fun equiv (pos: Int, snap: Snapshot): Boolean
+    fun equiv (snap: Snapshot): Boolean
     {
         var i = 0
-        return this.pos == pos && states.all { it.equiv(pos, snap.elems[i++]) }
+        return pos == snap.pos && states.all { it.equiv(pos, snap.elems[i++]) }
     }
 
     /// Diagnostic ---------------------------------------------------------------------------------
