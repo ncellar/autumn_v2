@@ -110,7 +110,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * this grammar's required [states] as well as [moreStates].
      *
      * If the parser throws an exception it will be caught and encapsulated in a [DebugFailure]
-     * that will be returned. For panics, the failure is simply returned as such.
+     * that will be returned.
      *
      * If the root does not match the whole input, return the furthest encountered error.
      * If this is not the desired behaviour, use [parsePrefix].
@@ -135,7 +135,6 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     {
         grammar.initialize()
         return try { grammar.root.parse(this) }
-        catch (p: Panic) { p.failure }
         catch (e: Throwable) { grammar.root.failure(this, e) }
     }
 

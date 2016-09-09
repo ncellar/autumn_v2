@@ -35,7 +35,7 @@ open class Failure (pos: Int, parser: Parser, msg: () -> String, cause: Throwabl
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * If this failure was caused by an exception (but not a [Panic]), that exception.
+     * If this failure was caused by an exception, that exception.
      */
     val cause = cause
 }

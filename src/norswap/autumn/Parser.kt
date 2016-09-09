@@ -49,14 +49,6 @@ import norswap.violin.stream.filter
  *
  * A parser must not be stateful: maintain your state within in a [State] registered with [Context].
  *
- * ## Panics
- *
- * A parser can exit through a [Panic], which is a throwable, so you shouldn't
- * rely on the code after any [Parser.invoke] invocation being executed. If it is nevertheless
- * necessary, use a `finally` block or [chill]. It is however not necessary to use those
- * mechanisms to restore the state, as it must be restored to an earlier snapshot when/if the panic
- * is caught.
- *
  * # Name
  *
  * A parser can optionally have a [name], which will be used when printing the parser. This name
