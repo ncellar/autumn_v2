@@ -175,22 +175,3 @@ class Snapshot (val pos: Int, val stack: LinkList<Any>, val elems: List<Any>)
 class Delta (val pos: Int, val stackDiff: LinkList<Any>, val elems: List<Any>)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-
-NOTE(norswap)
-
-Could this be made more efficient? Yes.
-
-We could have a global "dirty" flag that would be set whenever any of the state changes.
-
-We could have a "current" snapshot variable, which is set when creating or restoring a snapshot
-(if "dirty" is false, we can reuse the last snapshot).
-
-Whenever restoring, we can identity-compare the snapshot to restore with "current". If they are
-the same, no work is required.
-
-The exact same optimization ("dirty" + "current") could be performed at the level of individual
-states.
-
-*/
