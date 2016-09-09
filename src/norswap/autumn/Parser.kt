@@ -118,14 +118,6 @@ abstract class Parser (vararg val children: Parser): ParserBuilder
      */
     var name: String? = null
 
-    /**
-     * If true, don't trace the children of this parser when [Context.logTrace] is set.
-     * Default: false.
-     */
-    var noTrace = false
-
-    private var traceSuppressedAt = -1
-
     /// Parse --------------------------------------------------------------------------------------
 
     /**
@@ -133,65 +125,6 @@ abstract class Parser (vararg val children: Parser): ParserBuilder
      */
     abstract fun _parse_(ctx: Context): Result
     // NOTE: _parse_ is not protected, because this would generate an extra method call indirection
-
-    internal class LogState {
-        var lastResMsg: String = ""
-        var depth = 1
-    }
-
-    /**
-     * Called by [parse] before [_parse_].
-     * @suppress
-     */
-    fun beforeParse(ctx: Context) {
-        if (DEBUG) {
-            ctx.trace.push(this to ctx.pos)
-            ctx.debugTraceBeforeHook(ctx, this)
-        }
-
-        if (ctx.logTrace) {
-            ctx.dbg.lastResMsg = ""
-            ctx.logStream.println("${"-|".repeat(ctx.dbg.depth)} $this ($ctx.posStr)")
-            ++ctx.dbg.depth
-            if (noTrace) {
-                traceSuppressedAt = ctx.dbg.depth
-                ctx.logTrace = false
-                ++ ctx.dbg.depth
-            }
-        }
-        else if (noTrace && traceSuppressedAt != -1) {
-            ++ ctx.dbg.depth
-        }
-    }
-
-    /**
-     * Called by [parse] after [_parse_].
-     * @suppress
-     */
-    fun afterParse(ctx: Context, res: Result) {
-
-        if (noTrace && traceSuppressedAt != -1) {
-            -- ctx.dbg.depth
-            if (traceSuppressedAt == ctx.dbg.depth) {
-                traceSuppressedAt = -1
-                ctx.logTrace = true
-            }
-        }
-
-        if (ctx.logTrace) {
-            --ctx.dbg.depth
-            val resMsg = res.toString()
-            if (resMsg != ctx.dbg.lastResMsg) {
-                ctx.dbg.lastResMsg = resMsg
-                ctx.logStream.println("${"-|".repeat(ctx.dbg.depth)}-> $resMsg")
-            }
-        }
-
-        if (DEBUG) {
-            ctx.trace.pop()
-            ctx.debugTraceAfterHook(ctx, this)
-        }
-    }
 
     /**
      * See [Parser]. Implement through [invoke] preferably, or through [_parse_].
@@ -201,10 +134,10 @@ abstract class Parser (vararg val children: Parser): ParserBuilder
     {
         val fail = ctx.failure
         ctx.failure = Success
-        beforeParse(ctx)
+        if (DEBUG) ctx.trace.push(this to ctx.pos)
         val r = _parse_(ctx)
         ctx.failure = Furthest.max(ctx.failure, r, fail)!!
-        afterParse(ctx, r)
+        if (DEBUG) ctx.trace.pop()
         return r
     }
 

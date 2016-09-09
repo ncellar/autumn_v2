@@ -81,21 +81,6 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     val posStr: String /**/ get() = posToString(pos)
 
     /**
-     * If true, prints a trace of the execution as a tree of parser invocations. Default: false
-     */
-    var logTrace = false
-
-    /**
-     * If [DEBUG], this gets called before invoking any parser and logging its invocation.
-     */
-    var debugTraceBeforeHook: Context.(Parser) -> Unit = {}
-
-    /**
-     * If [DEBUG], this gets called after invoking any parser and logging its invocation.
-     */
-    var debugTraceAfterHook: Context.(Parser) -> Unit = {}
-
-    /**
      * The stream on which log information will appear. Default: [System.out]
      */
     var logStream: PrintStream = System.out
@@ -105,7 +90,6 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      */
     val trace = LinkList<Pair<Parser, Int>>()
 
-    internal val dbg = Parser.LogState()
     internal val states: List<State<*,*>>
     private  val stateMap: MutableMap<Class<out State<*,*>>, State<*,*>>
 
