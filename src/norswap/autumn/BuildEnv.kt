@@ -62,11 +62,10 @@ class BuildEnv(
     val ctx: Context,
     val parser: Parser,
     val backargs: Int,
-    val pop: Boolean,
-    val stack: Stack<Any> = ctx.stack)
+    val pop: Boolean)
 {
     private val size0: Int
-    init { size0 = stack.size }
+    init { size0 = ctx.stack.size }
     lateinit var items: List<Any>
 
     // ---------------------------------------------------------------------------------------------
@@ -84,6 +83,8 @@ class BuildEnv(
      */
     fun prepareAccess()
     {
+        val stack = ctx.stack
+
         if (stack.size < size0)
             throw Exception("Stack shrunk beyond initial size")
 
@@ -154,7 +155,7 @@ class BuildEnv(
     /**
      * Push an item on the stack.
      */
-    fun push(item: Any) { stack.push(item) }
+    fun push(item: Any) { ctx.stack.push(item) }
 
     // ---------------------------------------------------------------------------------------------
 
@@ -162,7 +163,7 @@ class BuildEnv(
      * Ensures that all items pushed on the stack by the receiver are popped.
      */
     fun popAll() {
-        if (!pop) repeat(stack.size - size0) { stack.pop() }
+        if (!pop) repeat(ctx.stack.size - size0) { ctx.stack.pop() }
     }
 }
 

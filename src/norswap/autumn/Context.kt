@@ -4,6 +4,7 @@ import norswap.autumn.result.*
 import norswap.autumn.utils.dontRecordFailures
 import norswap.autumn.utils.expandTabsAndNullTerminate
 import norswap.violin.link.LinkList
+import norswap.violin.stream.*
 import java.io.PrintStream
 import kotlin.reflect.KClass
 
@@ -36,7 +37,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * State to build some result form the parse (typically an AST).
      * A parser must not pop things from the stack that were not pushed by its descendants.
      */
-    val stack = MonotonicStack<Any>()
+    var stack = LinkList<Any>()
 
     /**
      * State to handle left-recursion. Left public in case you want to implement something
@@ -109,9 +110,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     private  val stateMap: MutableMap<Class<out State<*,*>>, State<*,*>>
 
     init {
-        stateMap = mutableMapOf(
-            stack.javaClass to stack,
-            seeds.javaClass to seeds)
+        stateMap = mutableMapOf(seeds.javaClass to seeds)
         grammar.requiredStates().forEach { stateMap.put(it.javaClass, it) }
         stateArgs               .forEach { stateMap.put(it.javaClass, it) }
         states = stateMap.values.toList()
@@ -189,13 +188,16 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * Maps [State.snapshot] over all states.
      */
     fun snapshot (): Snapshot
-        = Snapshot(pos, states.map { it.snapshot() })
+        = Snapshot(pos, stack.clone(), states.map { it.snapshot() })
 
     /**
      * Maps [State.restore] over all states, using a return value of [snapshot].
      */
-    fun restore (snap: Snapshot) {
+    fun restore (snap: Snapshot)
+    {
         pos = snap.pos
+        stack = snap.stack.clone()
+
         snap.elems.forEachIndexed { i, s -> states[i].restore(s) }
     }
 
@@ -203,13 +205,32 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
      * Maps [State.diff] over all states, using a return value of [snapshot].
      */
     fun diff (snap: Snapshot): Delta
-        = Delta(pos, snap.elems.mapIndexed { i, d -> states[i].diff(d) })
+    {
+        fun illegalState() =
+            IllegalStateException("Supplied snapshot could not be a prefix of current stack.")
+
+        val snapstack = snap.stack
+
+        if (snapstack.size > stack.size)
+            illegalState()
+
+        val stream = stack.linkStream()
+        val stackDiff = stream.limit(stack.size - snapstack.size).map { it.item }.linkList()
+
+        if (stream.next() !== snapstack.link)
+            illegalState()
+
+        return Delta(pos, stackDiff, snap.elems.mapIndexed { i, d -> states[i].diff(d) })
+    }
+
 
     /**
      * Maps [State.merge] over all states, using a return value of [diff].
      */
-    fun merge (delta: Delta) {
+    fun merge (delta: Delta)
+    {
         pos = delta.pos
+        delta.stackDiff.stream().each { stack.push(it) }
         delta.elems.forEachIndexed { i, d -> states[i].merge(d) }
     }
 

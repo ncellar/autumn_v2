@@ -38,20 +38,48 @@ open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
 : State<LinkList<T>, LinkList<T>>, Stack<T>
 {
     // Delegate
-    override fun stream() = stack.stream()
-    override val size: Int /**/ get() = stack.size
-    override fun push(item: T) = stack.push(item)
-    override fun peek() = stack.peek()
-    override fun pop() = stack.pop()
-    override fun at(depth: Int) = stack.at(depth)
+    override fun stream ()
+        = stack.stream()
 
-    override fun snapshot() = stack.clone()
-    override fun restore(snap: LinkList<T>) { stack = snap.clone() }
-    override fun diff(snap: LinkList<T>): LinkList<T> = stack.clone()
-    override fun merge(delta: LinkList<T>) { stack = delta.clone() }
-    override fun equiv(pos: Int, snap: LinkList<T>) = stack == snap
-    override fun snapshotString(snap: LinkList<T>, ctx: Context) = "[$snap]-|"
-    override fun toString() = "[$stack]-|"
+    override val size: Int
+        get() = stack.size
+
+    override fun push (item: T) {
+        stack.push(item)
+    }
+
+    override fun peek ()
+        = stack.peek()
+
+    override fun pop (): T? {
+        return stack.pop()
+    }
+
+    override fun at (depth: Int)
+        = stack.at(depth)
+
+    override fun snapshot ()
+        = stack.clone()
+
+    override fun restore (snap: LinkList<T>) {
+        stack = snap.clone()
+    }
+
+    override fun diff (snap: LinkList<T>): LinkList<T>
+        = stack.clone()
+
+    override fun merge (delta: LinkList<T>) {
+        stack = delta.clone()
+    }
+
+    override fun equiv (pos: Int, snap: LinkList<T>)
+        = stack == snap
+
+    override fun snapshotString (snap: LinkList<T>, ctx: Context)
+        = "[$snap]-|"
+
+    override fun toString ()
+        = "[$stack]-|"
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

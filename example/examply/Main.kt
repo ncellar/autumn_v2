@@ -16,8 +16,8 @@ fun main(args: Array<String>)
 fun parseFile (path: String)
 {
     val input = readFile(path)
-    val context = Context(input, grammar)
-    val result = context.parse()
-    println(diagnostic(context, result))
-    println(context.stack.toString(context))
+    val ctx = Context(input, grammar)
+    val result = ctx.parse()
+    println(diagnostic(ctx, result))
+    println(ctx.stack)
 }
