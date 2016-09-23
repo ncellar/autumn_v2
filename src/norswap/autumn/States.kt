@@ -1,12 +1,11 @@
 @file:Suppress("UNCHECKED_CAST")
 package norswap.autumn
+import norswap.autumn.utils.Copyable
+import norswap.autumn.utils.LinkList
+import norswap.autumn.utils.linkList
+import norswap.autumn.utils.plusAssign
 import norswap.triemap.ImmutableMap
 import norswap.triemap.TrieMap
-import norswap.violin.Copyable
-import norswap.violin.stream.*
-import norswap.violin.link.*
-import norswap.violin.Stack
-import norswap.violin.utils.plusAssign
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -36,28 +35,32 @@ open class CopyState<C: Copyable>(var get: C): State<C, C> {
  * hence [snapshot] == [diff] and [restore] == [merge].
  */
 open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
-: State<LinkList<T>, LinkList<T>>, Stack<T>
+: State<LinkList<T>, LinkList<T>>, Iterable<T>
 {
     // Delegate
-    override fun stream ()
-        = stack.stream()
 
-    override val size: Int
+    val size: Int
         get() = stack.size
 
-    override fun push (item: T) {
+    fun push (item: T) {
         stack.push(item)
     }
 
-    override fun peek ()
+    fun peek ()
         = stack.peek()
 
-    override fun pop (): T? {
+    fun pop (): T? {
         return stack.pop()
     }
 
-    override fun at (depth: Int)
+    fun at (depth: Int)
         = stack.at(depth)
+
+    fun truncate (target: Int): Unit
+        = stack.truncate(target)
+
+    override fun iterator()
+        = stack.iterator()
 
     override fun snapshot ()
         = stack.clone()
@@ -98,24 +101,47 @@ open class StackState<T: Any> (private var stack: LinkList<T> = LinkList())
  * invocation.
  */
 open class MonotonicStack<T: Any>(private var stack: LinkList<T> = LinkList())
-: State<LinkList<T>, LinkList<T>>, Stack<T>
+: State<LinkList<T>, LinkList<T>>, Iterable<T>
 {
     // Delegate
-    override fun stream() = stack.stream()
-    override val size: Int /**/ get() = stack.size
-    override fun push(item: T) = stack.push(item)
-    override fun peek() = stack.peek()
-    override fun pop() = stack.pop()
-    override fun at(depth: Int) = stack.at(depth)
 
-    override fun snapshot() = stack.clone()
-    override fun restore(snap: LinkList<T>) { stack = snap.clone() }
+    val size: Int
+        get() = stack.size
 
-    override fun diff(snap: LinkList<T>): LinkList<T> {
+    fun push (item: T) {
+        stack.push(item)
+    }
+
+    fun peek ()
+        = stack.peek()
+
+    fun pop (): T? {
+        return stack.pop()
+    }
+
+    fun at (depth: Int)
+        = stack.at(depth)
+
+    fun truncate (target: Int): Unit
+        = stack.truncate(target)
+
+    override fun iterator()
+        = stack.iterator()
+
+    override fun snapshot()
+        = stack.clone()
+
+    override fun restore(snap: LinkList<T>) {
+        stack = snap.clone()
+    }
+
+    override fun diff(snap: LinkList<T>): LinkList<T>
+    {
         if (snap.size > stack.size) illegalState()
-        val stream = stack.linkStream()
-        val diff = stream.limit(stack.size - snap.size).map { it.item }.linkList()
-        if (stream.next() !== snap.link) illegalState()
+        val stream = stack.linkIterable()
+        val sizeDiff = stack.size - snap.size
+        val diff = stream.take(sizeDiff).map { it.item }.linkList()
+        if (stream.elementAtOrNull(sizeDiff) !== snap.link) illegalState()
         return diff
     }
 
@@ -123,7 +149,7 @@ open class MonotonicStack<T: Any>(private var stack: LinkList<T> = LinkList())
         IllegalStateException("Supplied snapshot could not be a prefix of current stack.")
 
     override fun merge(delta: LinkList<T>)
-        = delta.stream().each { stack.push(it) }
+        = delta.forEach { stack.push(it) }
 
     override fun equiv(pos: Int, snap: LinkList<T>) = true
     override fun snapshotString(snap: LinkList<T>, ctx: Context) = "[$snap]-|"
@@ -151,15 +177,22 @@ open class MapState<K: Any, V: Any>(private var map: TrieMap<K, V> = TrieMap())
 
     override fun snapshot() = map
 
-    override fun restore(snap: TrieMap<K, V>) { map = snap }
+    override fun restore(snap: TrieMap<K, V>) {
+        map = snap
+    }
 
-    override fun diff(snap: TrieMap<K, V>) = map
+    override fun diff(snap: TrieMap<K, V>)
+        = map
 
-    override fun merge(delta: TrieMap<K, V>) { map = delta }
+    override fun merge(delta: TrieMap<K, V>) {
+        map = delta
+    }
 
-    override fun equiv(pos: Int, snap: TrieMap<K, V>) = map === snap
+    override fun equiv(pos: Int, snap: TrieMap<K, V>)
+        = map === snap
 
-    override fun snapshotString(snap: TrieMap<K, V>, ctx: Context): String {
+    override fun snapshotString(snap: TrieMap<K, V>, ctx: Context): String
+    {
         val b = StringBuilder()
         b += "{"
         for ((k, v) in map)

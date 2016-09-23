@@ -1,22 +1,18 @@
 package norswap.autumn
 import norswap.autumn.extensions.tokens.TokenCheckParser
 import norswap.autumn.result.*
-import norswap.autumn.utils.isMethod
-import norswap.violin.stream.*
-import norswap.violin.link.stream
-import norswap.violin.utils.expr
-import norswap.violin.utils.plusAssign
+import norswap.autumn.utils.*
 
 // -------------------------------------------------------------------------------------------------
 
 /**
  * Returns a string describing the chain of parser invocations described by [parsers].
  */
-fun parseTrace(ctx: Context, parsers: Stream<Pair<Parser, Int>>): String
+fun parseTrace(ctx: Context, parsers: Iterable<Pair<Parser, Int>>?): String
 {
     val b = StringBuilder()
 
-    parsers.each {
+    parsers?.forEach {
 
         val (parser, pos) = it
 
@@ -75,12 +71,12 @@ fun trace(ctx: Context, f: DebugFailure): String
 
     if (f.cause != null) {
         // Prints the part of the stacktrace occuring underneath a leaf parser.
-        f.cause.stackTrace.stream()
-            .upTo { it.isMethod(Parser::class, "_parse_") }
-            .each { b += "  at $it\n" }
+        val st = f.cause.stackTrace
+        st  .copyOf(st.indexOfFirst { it.isMethod(Parser::class, "_parse_") } + 1)
+            .forEach { b += "  at $it\n" }
     }
 
-    b += parseTrace(ctx, f.trace.stream()).prependIndent("  ")
+    b += parseTrace(ctx, f.trace).prependIndent("  ")
 
     return b.toString()
 }

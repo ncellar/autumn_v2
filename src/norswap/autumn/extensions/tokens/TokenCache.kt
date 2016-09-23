@@ -1,7 +1,6 @@
 package norswap.autumn.extensions.tokens
 import norswap.autumn.Context
-import norswap.violin.stream.*
-import norswap.violin.utils.plusAssign
+import norswap.autumn.utils.plusAssign
 import java.util.HashMap
 
 /**
@@ -14,11 +13,9 @@ class TokenCache: HashMap<Int, Token<*>>()
     {
         val b = StringBuilder()
         b += "{"
-        entries
-            .stream().array()
+        entries.toTypedArray()
             .apply { sortBy { it.key } }
-            .stream()
-            .each {
+            .forEach {
                 val (pos, tok) = it
                 if (tok !== NO_RESULT) {
                     val name = (ctx.grammar as TokenGrammar).parserName(tok.type)

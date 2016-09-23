@@ -2,7 +2,7 @@ package norswap.autumn.parsers
 import norswap.autumn.Context
 import norswap.autumn.Parser
 import norswap.autumn.result.*
-import norswap.violin.utils.after
+import norswap.autumn.utils.after
 
 // Parsers that match items sequentially.
 

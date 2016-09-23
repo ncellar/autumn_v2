@@ -1,6 +1,5 @@
 package norswap.autumn
 import norswap.autumn.parsers.*
-import norswap.violin.stream.*
 import kotlin.reflect.*
 import kotlin.reflect.jvm.javaType
 
@@ -50,13 +49,12 @@ abstract class Grammar
     /**
      * Streams all properties of this class with type `Parser` (i.e. all parsers of this grammar).
      */
-    private fun parsers(): Stream<KProperty<*>> =
-        javaClass.kotlin.memberProperties.stream()
-            .filter {
-                !it.returnType.isMarkedNullable
-                    && it.returnType.javaType is Class<*>
-                    && ParserBuilder::class.java.isAssignableFrom(it.returnType.javaType as Class<*>)
-                    && it.name != "tokenParser"
+    private fun parsers(): List<KProperty<*>> =
+        javaClass.kotlin.memberProperties.filter {
+            !it.returnType.isMarkedNullable
+                && it.returnType.javaType is Class<*>
+                && ParserBuilder::class.java.isAssignableFrom(it.returnType.javaType as Class<*>)
+                && it.name != "tokenParser"
             }
 
     private var initialized = false
@@ -73,7 +71,7 @@ abstract class Grammar
 
         if (initialized) return
 
-        parsers().each {
+        parsers().forEach {
             val parser = (it.call(this) as ParserBuilder).build()
 
             if (parser.name != null) {

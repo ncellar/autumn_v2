@@ -5,10 +5,6 @@ import norswap.autumn.parsers.*
 import norswap.autumn.syntax.*
 import norswap.autumn.result.Success
 import norswap.autumn.utils.*
-import norswap.violin.*
-import norswap.violin.link.LinkList
-import norswap.violin.stream.*
-import norswap.violin.utils.*
 import java.util.HashMap
 
 class Examply: Grammar()
@@ -81,10 +77,10 @@ class Examply: Grammar()
     val Context.types: TypeStack /**/ get() = state(TypeStack::class)
 
     fun isType(ctx: Context, iden: String): Boolean
-        = ctx.types.stream().any { it.name == iden }
+        = ctx.types.any { it.name == iden }
 
     fun priv(ctx: Context, iden: String): LinkList<Type>
-        = ctx.types.stream().filter { it.name == iden }.next() ?.priv ?: LinkList()
+        = ctx.types.firstOrNull { it.name == iden } ?. priv ?: LinkList()
 
     fun NewType (child: Parser, alias: Boolean = false) = Parser { ctx ->
         child.parse(ctx) andDo {
@@ -98,7 +94,7 @@ class Examply: Grammar()
     }
 
     fun inherit(ctx: Context, name: String)
-        = priv(ctx, name).stream().each { ctx.types.push(it) }
+        = priv(ctx, name).forEach { ctx.types.push(it) }
 
     fun ClassDef (body: Parser) = Parser { ctx ->
         val parent = ctx.stack.at(0) as Maybe<SimpleType>

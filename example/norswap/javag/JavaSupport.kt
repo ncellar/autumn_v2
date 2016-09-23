@@ -1,5 +1,4 @@
 package norswap.javag
-import norswap.violin.utils.get
 import norswap.autumn.utils.*
 
 fun parseInt(str: String): Number {

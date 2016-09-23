@@ -5,8 +5,8 @@ import norswap.autumn.Grammar
 import norswap.autumn.diagnostic
 import norswap.autumn.syntax.alias
 import norswap.autumn.result.Failure
+import norswap.autumn.utils.readFile
 import norswap.javag.Java
-import norswap.violin.utils.readFile
 
 var list = listOf("")
 var inspect = false

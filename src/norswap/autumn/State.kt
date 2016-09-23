@@ -1,7 +1,5 @@
 package norswap.autumn
-import norswap.violin.link.LinkList
-import norswap.violin.utils.*
-import norswap.violin.stream.*
+import norswap.autumn.utils.*
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -149,7 +147,7 @@ class Snapshot (val pos: Int, val stack: LinkList<Any>, val elems: List<Any>)
     {
         val b = StringBuilder()
         b += "snapshot {"
-        ctx.states.stream().zip(elems.stream()).each {
+        ctx.states.zip(elems).forEach {
             val (state, snap) = it
             b += "\n  ${state.javaClass.simpleName} = "
             b += state.snapshotString(snap, ctx).prependIndent("  ").trim()

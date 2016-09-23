@@ -2,7 +2,7 @@ package norswap.autumn.parsers
 import norswap.autumn.Context
 import norswap.autumn.Parser
 import norswap.autumn.result.Result
-import norswap.violin.utils.after
+import norswap.autumn.utils.after
 
 // Parsers to be used during debugging.
 

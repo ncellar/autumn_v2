@@ -3,8 +3,6 @@ import norswap.autumn.result.*
 import norswap.autumn.utils.isMethod
 import norswap.autumn.utils.clickableString
 import norswap.autumn.utils.rangeTo
-import norswap.autumn.utils.stream
-import norswap.violin.stream.filter
 
 /**
  * The parent of all parser classes.
@@ -103,7 +101,7 @@ abstract class Parser (vararg val children: Parser): ParserBuilder
      * In particular, the top of the stack trace is the constructor of [Parser].
      */
     val lineage: List<StackTraceElement>?
-        = (DEBUG) .. Throwable().stackTrace.toList()
+        = DEBUG .. Throwable().stackTrace.toList()
 
     /**
      * See [Parser]
@@ -218,9 +216,9 @@ abstract class Parser (vararg val children: Parser): ParserBuilder
      * in an initializer.
      */
     fun useLocation(): String?
-        = lineage.stream()
-            .filter { it.isMethod(Grammar::class, "<init>") }
-            .next()
+        = lineage
+            ?.filter { it.isMethod(Grammar::class, "<init>") }
+            ?.first()
             .let { it?.clickableString() }
 
     /**

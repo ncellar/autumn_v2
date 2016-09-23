@@ -1,9 +1,7 @@
 package norswap.autumn
 import norswap.autumn.result.*
 import norswap.autumn.parsers.Build
-import norswap.violin.Maybe
-import norswap.violin.Stack
-import norswap.violin.stream.*
+import norswap.autumn.utils.Maybe
 
 // =================================================================================================
 
@@ -91,11 +89,12 @@ class BuildEnv(
         if (size0 < backargs)
             throw Exception("Requiring more back args than present on the stack")
 
-        items = stack.stream()
-            .limit(stack.size - size0 + backargs)
-            .after { if (pop) stack.pop() }
-            .list()
+        items = stack
+            .take (stack.size - size0 + backargs)
             .asReversed()
+
+        if (pop)
+            stack.truncate(size0 - backargs)
     }
 
     // ---------------------------------------------------------------------------------------------

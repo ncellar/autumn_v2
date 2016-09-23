@@ -1,8 +1,7 @@
 package norswap.autumn
 import norswap.autumn.result.Result
-import norswap.violin.link.*
-import norswap.violin.stream.*
-import norswap.violin.utils.plusAssign
+import norswap.autumn.utils.LinkList
+import norswap.autumn.utils.plusAssign
 
 data class Seed (
     val pos: Int,
@@ -27,22 +26,20 @@ class Seeds (): StackState<Seed>() {
      * current position. Currently, there should only be entries for the current position.
      */
     override fun equiv(pos: Int, snap: LinkList<Seed>)
-        = snap.stream().takeWhile { it.pos >= pos }.set() ==
-               stream().takeWhile { it.pos >= pos }.set()
+        = snap.takeWhile { it.pos >= pos }.toSet() ==
+               takeWhile { it.pos >= pos }.toSet()
 
     fun get(pos: Int, parser: Parser): Seed?
-        = stream()  .takeWhile { it.pos >= pos }
-                    .filter { it.parser == parser }
-                    .next()
+        = takeWhile { it.pos >= pos } .firstOrNull { it.parser == parser }
 
     override fun snapshotString(snap: LinkList<Seed>, ctx: Context): String {
         val b = StringBuilder()
         b += "{"
-        stream().each { seed ->
+        forEach { seed ->
             b += "\n"
             b += seed.toString(ctx).prependIndent("  ")
         }
-        if (!empty) b += "\n"
+        if (!(size == 0)) b += "\n"
         b += "}"
         return b.toString()
     }

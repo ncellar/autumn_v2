@@ -3,12 +3,10 @@ import norswap.autumn.Context
 import norswap.autumn.Parser
 import norswap.autumn.BuildEnv
 import norswap.autumn.result.*
-import norswap.autumn.syntax.build
 import norswap.autumn.withStack
-import norswap.violin.Maybe
-import norswap.violin.None
-import norswap.violin.stream.*
-import norswap.violin.utils.after
+import norswap.autumn.utils.Maybe
+import norswap.autumn.utils.None
+import norswap.autumn.utils.after
 
 // Parsers used to build AST nodes.
 
@@ -114,31 +112,5 @@ class BuildPair (val child: Parser, val backargs: Int = 0): Parser(child)
     override fun _parse_(ctx: Context): Result
         = withStack(ctx, this, child, backargs) { push(Pair<Any, Any>(get(), get())) }
 }
-
-// -------------------------------------------------------------------------------------------------
-
-// TODO ??
-
-/**
- * Invokes [child] and, if successful, pops an item of type [T] and a list of [T]s from
- * [Context.stack], then uses the [assoc] function to build a right associative structure
- * from these items. If the list is empty, returns the item directly. The right branch of the
- * structure is the left parameter (named r = result).
- *
- * example: `Binary(expr, +"=", expr).leftAssoc<Expr> { r, t -> Assign(r, t) }`
- */
-fun <T: Any> RightAssoc (child: Parser, assoc: (r: T, t: T) -> T) =
-    child.build {
-        val list: List<T> = get(1)
-        if (list.isEmpty()) get(0)
-        else (Stream(get<T>(0)) then list.stream()).reduceRight(assoc)!!
-    }
-
-
-/**
- * See [RightAssoc].
- */
-fun <T: Any> Parser.rightAssoc(assoc: (r: T, t: T) -> T)
-    = RightAssoc<T>(this, assoc)
 
 // -------------------------------------------------------------------------------------------------

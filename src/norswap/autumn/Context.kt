@@ -1,10 +1,10 @@
 @file:Suppress("CanBePrimaryConstructorProperty")
 package norswap.autumn
 import norswap.autumn.result.*
+import norswap.autumn.utils.LinkList
 import norswap.autumn.utils.dontRecordFailures
 import norswap.autumn.utils.expandTabsAndNullTerminate
-import norswap.violin.link.LinkList
-import norswap.violin.stream.*
+import norswap.autumn.utils.linkList
 import java.io.PrintStream
 import kotlin.reflect.KClass
 
@@ -202,10 +202,11 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
         if (snapstack.size > stack.size)
             illegalState()
 
-        val stream = stack.linkStream()
-        val stackDiff = stream.limit(stack.size - snapstack.size).map { it.item }.linkList()
+        val stream = stack.linkIterable()
+        val sizeDiff = stack.size - snapstack.size
+        val stackDiff = stream.take(sizeDiff).map { it.item }.linkList()
 
-        if (stream.next() !== snapstack.link)
+        if (stream.elementAtOrNull(sizeDiff) !== snapstack.link)
             illegalState()
 
         return Delta(pos, stackDiff, snap.elems.mapIndexed { i, d -> states[i].diff(d) })
@@ -219,7 +220,7 @@ class Context (input: String = "", grammar: Grammar, vararg stateArgs: State<*,*
     fun merge (delta: Delta)
     {
         pos = delta.pos
-        delta.stackDiff.stream().each { stack.push(it) }
+        delta.stackDiff.forEach { stack.push(it) }
         delta.elems.forEachIndexed { i, d -> states[i].merge(d) }
     }
 

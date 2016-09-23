@@ -2,7 +2,7 @@ package examply
 import norswap.autumn.Context
 import norswap.autumn.DEBUG
 import norswap.autumn.diagnostic
-import norswap.violin.utils.readFile
+import norswap.autumn.utils.readFile
 
 val grammar = Examply()
 

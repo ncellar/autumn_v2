@@ -29,3 +29,15 @@ var HIDE_TOKENS_IN_TRACE: Boolean = true
  * Size of tabs, used to display text positions.
  */
 var TAB_SIZE = 4
+
+/**
+ * Index of the first character in a line.
+ * Usually 0 or 1. Default is 1.
+ */
+var LINE_OFFSET = 1
+
+/**
+ * Index of the first line.
+ * Usually 1, which is the default.
+ */
+var COLUMN_OFFSET = 1

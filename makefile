@@ -30,10 +30,8 @@ VERSION		:= 0.1.0
 KOTLIN_VER	:= 1.0.3
 TESTNG_VER	:= 6.9.10
 DOKKA_VER	:= 0.9.8
-VIOLIN_VER	:= 0.1.0
 
 MAVEN		:= http://central.maven.org/maven2
-VIOLIN_P	:= https://dl.bintray.com/norswap/maven/com/norswap/violin
 COMPILER_P	:= https://github.com/JetBrains/kotlin/releases/download
 DOKKA_P		:= https://github.com/Kotlin/dokka/releases/download
 TESTNG_P	:= $(MAVEN)/org/testng/testng
@@ -43,14 +41,6 @@ TESTNG		:= "$(TESTNG_P)/$(TESTNG_VER)/testng-$(TESTNG_VER).jar"
 DOKKA		:= "$(DOKKA_P)/$(DOKKA_VER)/dokka-fatjar.jar"
 COMPILER	:= "$(COMPILER_P)/v$(KOTLIN_VER)/kotlin-compiler-$(KOTLIN_VER).zip"
 REFLECT		:= "$(REFLECT_P)/$(KOTLIN_VER)/kotlin-reflect-$(KOTLIN_VER).jar"
-VIOLIN		:= "$(VIOLIN_P)/$(VIOLIN_VER)/violin-$(VIOLIN_VER).jar"
-VIOLIN_SRC	:= "$(VIOLIN_P)/$(VIOLIN_VER)/violin-$(VIOLIN_VER)-sources.jar"
-
-lib/violin.jar:
-	curl -L $(VIOLIN) > $@
-
-lib/violin-sources.jar:
-	curl -L $(VIOLIN_SRC) > $@
 
 lib/kotlin-reflect.jar:
 	curl -L $(REFLECT) > $@
@@ -61,12 +51,10 @@ lib/dokka.jar:
 lib/testng.jar:
 	curl -L $(TESTNG) > $@
 
-DEPS 	:= kotlin lib/violin.jar lib/kotlin-reflect.jar
+DEPS 	:= kotlin lib/kotlin-reflect.jar
 TDEPS	:= $(DEPS) lib/testng.jar
 
-sources: lib/violin-sources.jar
-
-offline: $(TDEPS) lib/dokka.jar lib/violin-sources.jar
+offline: $(TDEPS) lib/dokka.jar
 
 # ------------------------------------------------------------------------------
 # KOTLIN
@@ -136,11 +124,12 @@ jar:
 	find out -name .DS_Store -type f -delete
 	jar cf out/$(NAME)-$(VERSION).jar -C $(output) .
 
+# TODO include reflect lib?
 fatjar:
 	find out -name .DS_Store -type f -delete
 	mkdir -p $(STAGING)
-	unzip lib/violin.jar -d $(STAGING)
-	mv $(META_INF)/main.kotlin_module $(META_INF)/violin.kotlin_module
+#	unzip lib/violin.jar -d $(STAGING)
+#	mv $(META_INF)/main.kotlin_module $(META_INF)/violin.kotlin_module
 	cp -R $(output)/* $(STAGING)
 	jar cf out/$(NAME)-$(VERSION)-fat.jar -C $(STAGING) .
 	rm -rf $(STAGING)
