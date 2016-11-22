@@ -291,7 +291,7 @@ open class Java: TokenGrammar()
 
     val annotationElementList
         = !(`{` .. (annotationElement around `,`) .. `,`.opt .. `}`)
-        .build { AnnotationElementList(rest()) }
+        .build { NAnnotationElementList(rest()) }
 
     val annotationElementPair
         = (iden .. `=` .. annotationElement)
@@ -320,11 +320,11 @@ open class Java: TokenGrammar()
         .collect<String>()
 
     val annotation
-        = !(`@` ..qualifiedIden.. annotationSuffix)
+        = !(`@` .. qualifiedIden .. annotationSuffix)
 
     val annotations
         = annotation.repeat
-        .collect<Annotation>()
+        .collect<NJavaAnnotation>()
 
     /// TYPES ======================================================================================
 
@@ -615,7 +615,7 @@ open class Java: TokenGrammar()
         = !(modifiers .. typeDeclSuffix)
 
     val typeDecls
-        = typeDecl.repeat
+        = (typeDecl / semi).repeat
         .collect<Decl>()
 
     /// EXPRESSIONS ================================================================================
@@ -686,7 +686,7 @@ open class Java: TokenGrammar()
 
     val methodRef
         = (type .. dcolon .. typeArgs .. iden)
-        .build { MethodReference(get(), get(), get()) }
+        .build { UnboundMethodReference(get(), get(), get()) }
 
     val newRef
         = (type .. dcolon .. typeArgs .. `new`)
@@ -735,6 +735,10 @@ open class Java: TokenGrammar()
         or { dotNew }
     }
 
+    val refPostfix
+        = (dcolon .. typeArgs .. iden)
+        .build(1) { BoundMethodReference(get(), get(), get()) }
+
     val arrayPostfix
         = (lsbra .. !"expr" .. rsbra)
         .build(1) { ArrayAccess(get(), get()) }
@@ -753,6 +757,7 @@ open class Java: TokenGrammar()
         or { arrayPostfix }
         or { incSuffix }
         or { decSuffix }
+        or { refPostfix }
     }
 
     val postfixExpr
@@ -785,7 +790,7 @@ open class Java: TokenGrammar()
         .build { Not(get()) }
 
     val cast
-        = (`(` .. typeUnion .. `)` .. (!"prefixExpr" / lambda))
+        = (`(` .. typeUnion .. `)` .. (lambda / !"prefixExpr"))
         .build { Cast(get(), get()) }
 
     val prefixExpr = !choice {

@@ -20,8 +20,7 @@ class Choice (vararg children: Parser): Parser(*children)
         }
 
         return ctx.failure.let {
-            if (it is Failure) it
-            else failure(ctx) { "empty choice" }
+            it as? Failure ?: failure(ctx) { "empty choice" }
         }
     }
 }
@@ -58,8 +57,7 @@ class Longest (vararg children: Parser): Parser(*children)
             Success
         }
         else ctx.failure.let {
-            if (it is Failure) it
-            else failure(ctx) { "empty longest-match choice" }
+            it as? Failure ?: failure(ctx) { "empty longest-match choice" }
         }
     }
 }

@@ -352,3 +352,6 @@ fun main (args: Array<String>)
         println("\n" + ctx.stack)
     }
 }
+
+// TODO bound method reference test case
+// TODO top level semicolon test case

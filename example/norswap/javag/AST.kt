@@ -15,7 +15,7 @@ data class ExtendsBound (
 interface Type
 
 data class PrimitiveType (
-    val ann: List<Annotation>,
+    val ann: List<NJavaAnnotation>,
     val name: String)
     : Type
 
@@ -26,7 +26,7 @@ interface RefType
     : Type
 
 data class Wildcard (
-    val ann: List<Annotation>,
+    val ann: List<NJavaAnnotation>,
     val bounds: TypeBound?)
     : RefType
 
@@ -35,7 +35,7 @@ data class ClassType (
     : RefType
 
 data class ClassTypePart (
-    val ann: List<Annotation>,
+    val ann: List<NJavaAnnotation>,
     val name: String,
     val targs: List<Type>)
 
@@ -45,10 +45,10 @@ data class ArrayType (
     : RefType
 
 data class Dimension (
-    val ann: List<Annotation>)
+    val ann: List<NJavaAnnotation>)
 
 data class TypeParam (
-    val ann: List<Annotation>,
+    val ann: List<NJavaAnnotation>,
     val name: String,
     val bounds: List<Type>)
 
@@ -56,31 +56,32 @@ data class TypeParam (
 
 interface AnnotationElement
 
-interface Annotation: AnnotationElement
+interface NJavaAnnotation : AnnotationElement
 
-data class AnnotationElementList (
+data class NAnnotationElementList(
     val elems: List<AnnotationElement>)
     : AnnotationElement
 
 data class NormalAnnotation (
     val name: List<String>,
     val elements: List<Pair<String, AnnotationElement>>)
-    : Annotation
+    : NJavaAnnotation
 
 data class MarkerAnnotation (
     val name: List<String>)
-    : Annotation
+    : NJavaAnnotation
 
 data class SingleElementAnnotation (
     val name: List<String>,
     val element: AnnotationElement)
-    : Annotation
+    : NJavaAnnotation
 
 // Expressions -------------------------------------------------------------------------------------
 
 interface Expr: AnnotationElement, Stmt
 
 object Null
+    : Expr
 
 object Super
     : Expr
@@ -109,7 +110,7 @@ data class ClassExpr (
     : Expr
 
 data class DimExpr (
-    val ann: List<Annotation>,
+    val ann: List<NJavaAnnotation>,
     val expr: Expr)
 
 data class ArrayInit (
@@ -125,7 +126,7 @@ data class ArrayCtorCall (
 
 data class CtorCall (
     val targs: List<Type>,
-    val ann: List<Annotation>,
+    val ann: List<NJavaAnnotation>,
     val type: Type,
     val args: List<Expr>,
     val body: List<Decl>?)
@@ -166,8 +167,14 @@ data class PostDecrement (val op: Expr): Expr
 data class PreIncrement  (val op: Expr): Expr
 data class PreDecrement  (val op: Expr): Expr
 
-data class MethodReference (
+data class UnboundMethodReference(
     val type: Type,
+    val targs: List<Type>,
+    val name: String)
+    : Expr
+
+data class BoundMethodReference(
+    val receiver: Expr,
     val targs: List<Type>,
     val name: String)
     : Expr
@@ -269,7 +276,7 @@ data class ThisParameter (
 data class VariadicParameter (
     val mods: List<Modifier>,
     val type: Type,
-    val arrayMods: List<Annotation>,
+    val arrayMods: List<NJavaAnnotation>,
     val name: String)
     : FormalParameter
 
@@ -286,7 +293,7 @@ data class UntypedParameters (
 ////
 
 data class Package (
-    val ann: List<Annotation>,
+    val ann: List<NJavaAnnotation>,
     val name: List<String>)
 
 data class Import (
@@ -299,7 +306,7 @@ data class Import (
 interface Decl: Stmt
 
 data class EnumConstant (
-    val ann: List<Annotation>,
+    val ann: List<NJavaAnnotation>,
     val name: String,
     val params: List<Expr>?,
     val body: List<Decl>?)
