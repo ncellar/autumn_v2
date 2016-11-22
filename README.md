@@ -1,5 +1,14 @@
 # The Autumn Parsing Library
 
+**DISCLAIMER**
+
+This repository was put up for historical records, only.
+
+There is a newer and better version of Autumn, available at
+https://github.com/norswap/autumn
+
+-------
+
 Autumn is a parsing library written in the [Kotlin] programming language.
 
 One of its specificities is its ability to parse context-sensitive languages
